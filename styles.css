@@ -1,8 +1,7 @@
-/* Luxury Bites by B. — built from mockup D (full site). The rules below are D's originals;
+/* Luxury Bites by B. — V3 (2026-09-29). Built from mockup D (full site). The rules below are D's originals;
    additions for the live build are at the end of the file. */
-/* Colours match B.'s order form (sky blue #e4f6fb, stripe #a6e1f0, teal-blue buttons) and the party flyer
-   (baby blue and warm beige panels, black borders, marble). */
-:root{--paper:#f8f7f4;--paper2:#e4f6fb;--ink:#2b1f19;--muted:#6b5b50;--body:#3f332c;--accent:#0b7a93;--gold:#a6e1f0;--rule:#2b1f19;--soft:#d8cdbf;--blue:#dcebf8;--sky:#a6e1f0;--taupe:#e7dccb;--latte:#c8ab8c;--mocha:#7b5a44;--cocoa:#3a2a21}
+/* Colours: one blue everywhere (#7db3e4, the section-number blue), chocolate browns, white backgrounds. */
+:root{--paper:#f8f7f4;--paper2:#f4f4f2;--ink:#2b1f19;--muted:#6b5b50;--body:#3f332c;--accent:#7db3e4;--gold:#7db3e4;--rule:#2b1f19;--soft:#d8cdbf;--blue:#7db3e4;--sky:#7db3e4;--taupe:#e7dccb;--latte:#c8ab8c;--mocha:#7b5a44;--cocoa:#3a2a21}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 body{background:linear-gradient(118deg,transparent 0 41%,rgba(160,140,120,.09) 41.6%,transparent 43.5%),linear-gradient(32deg,transparent 0 64%,rgba(160,140,120,.07) 64.4%,transparent 66%),linear-gradient(160deg,transparent 0 20%,rgba(160,140,120,.06) 20.3%,transparent 21.6%),var(--paper);background-attachment:fixed;color:var(--ink);font:16px/1.55 'DM Sans',system-ui,sans-serif}
@@ -125,11 +124,11 @@ button{cursor:pointer;background:none;border:0}
 .blurb{font-size:17px;color:var(--body);max-width:480px}
 .prices{margin:22px 0 26px;max-width:420px}
 .prices div,.ln{display:flex;align-items:baseline;gap:8px;padding:5px 0;font-size:15px}
-.prices div::after,.ln::after{content:'';order:1;flex:1;border-bottom:1.5px dotted #9fb3bc;transform:translateY(-4px)}
+.prices div::after,.ln::after{content:'';order:1;flex:1;border-bottom:1.5px dotted #c8c2ba;transform:translateY(-4px)}
 .prices div span:last-child,.ln span:last-child{order:2;font:600 18px 'Bodoni Moda',serif}
 .sentence{font:400 clamp(21px,2.2vw,26px)/1.75 'Bodoni Moda',serif;max-width:580px;padding-top:20px;border-top:1px solid var(--soft)}
 .sentence select{appearance:none;-webkit-appearance:none;border:0;border-bottom:1.5px solid var(--accent);border-radius:0;padding:0 18px 0 2px;font-family:'Bodoni Moda',serif;font-style:italic;font-size:inherit;line-height:1.3;color:var(--accent);cursor:pointer;max-width:100%;
-  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%230b7a93'/%3E%3C/svg%3E") no-repeat right 3px center}
+  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237db3e4'/%3E%3C/svg%3E") no-repeat right 3px center}
 .sentence select:focus{outline:2px solid var(--gold);outline-offset:2px}
 .addrow{display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap}
 .qty{display:inline-flex;align-items:center;border:1px solid var(--ink);height:46px}
@@ -206,7 +205,7 @@ button{cursor:pointer;background:none;border:0}
 .fl input,.fl select,.fl textarea{width:100%;border:0;border-bottom:1.5px solid var(--ink);border-radius:0;background:transparent;padding:8px 0;font:400 21px 'Bodoni Moda',serif}
 .fl textarea{min-height:84px;resize:vertical;font-size:19px}
 .fl input:focus,.fl select:focus,.fl textarea:focus{outline:none;border-color:var(--accent)}
-.fl input::placeholder,.fl textarea::placeholder{color:#8a9aa1;font-style:italic}
+.fl input::placeholder,.fl textarea::placeholder{color:#9a938b;font-style:italic}
 .toggle{display:flex;border:1px solid var(--ink)}
 .toggle button{flex:1;padding:12px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
 .toggle button.on{background:var(--ink);color:var(--paper)}
@@ -386,3 +385,46 @@ footer{background:var(--taupe);border-top:5px solid var(--ink)}
 footer .word em{color:var(--mocha)}
 .policy li::before{color:var(--mocha)}
 .tier:nth-child(2){background:var(--blue)}
+
+/* ---------- V2 colours: one matching blue, lighter blue accent, D-style banner ---------- */
+:root{--accent:#7db3e4;--accent-ink:#7db3e4}
+/* small text uses a deeper shade of the same blue so it stays readable */
+.tbd::after,.qa>h2,.q a,.empty a,.policy .contact a,.fp aside button i,.fp aside button:hover,
+.contents a:hover,footer .links a:hover,.cta:hover,.sentence .fixed,.feature h3 em,
+.dropcap::first-letter,.body p:first-child::first-letter{color:var(--accent-ink)}
+.q a,.empty a,.policy .contact a,.cta:hover{border-color:var(--accent-ink)}
+.sentence select{color:var(--accent-ink);border-bottom-color:var(--accent);
+  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237db3e4'/%3E%3C/svg%3E") no-repeat right 3px center}
+:focus-visible{outline-color:var(--accent-ink)}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--accent-ink)}
+/* "Order sheet" is a pill in the panel blue */
+.ordlink{background:var(--blue);color:var(--ink);padding:7px 8px 7px 14px;border-radius:999px;border:1px solid #7db3e4}
+.ordlink b{background:var(--accent);color:var(--ink)}
+/* scrolling banner: black with white words, like the original D mockup */
+.marquee{background:#141010;color:#fff}
+.marquee span{color:#c9a46a}
+/* one blue for every tinted section and box */
+.sec--taupe,.sec--blue,.pull,.treat:nth-child(even),.tier,.tier:first-child,.tier:last-child,.tier:nth-child(2),footer{background:var(--blue)}
+.sec--taupe .row:hover,.sec--blue .row:hover{background:rgba(255,255,255,.5)}
+/* white "made for you." with a soft shadow so it reads on the blue */
+.feature.flip h3 em{color:#fff;text-shadow:0 1px 3px rgba(43,31,25,.45)}
+/* keep "each" small and spaced after candy apple prices */
+.prices div span.ea{order:0;font:500 11px 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-left:6px}
+
+/* ---------- white backgrounds, theme-blue section numbers ---------- */
+:root{--paper:#ffffff}
+.top{background:rgba(255,255,255,.94)}
+.sec--taupe,.sec--blue,.pull,.treat:nth-child(even),footer{background:transparent}
+.tier,.tier:first-child,.tier:last-child,.tier:nth-child(2){background:#fff}
+.sec--taupe .row:hover,.sec--blue .row:hover{background:var(--paper2)}
+.sechead .num{color:var(--accent)}
+/* white text would vanish on white, so "made for you." goes theme blue */
+.feature.flip h3 em{color:var(--accent);text-shadow:none}
+/* plain white page (the marble streaks showed as gray lines on white) */
+body{background:#fff}
+
+/* ---------- one blue everywhere: the section-number blue #7db3e4 ---------- */
+:root{--accent:#7db3e4;--accent-ink:#7db3e4;--gold:#7db3e4;--sky:#7db3e4;--blue:#7db3e4;--paper2:#f4f4f2}
+.sentence select{background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237db3e4'/%3E%3C/svg%3E") no-repeat right 3px center}
+.ordlink{border-color:#7db3e4}
+.ordlink b{background:#fff;color:var(--ink)}
