@@ -6,8 +6,8 @@
 const FORM = {
   url: 'https://docs.google.com/forms/d/e/1FAIpQLSfC2lgxJJqR9lviBGhhkU86Wy8gDxEkJFHJ7Pdfm-07_UrnuQ/viewform',
   shortUrl: 'https://forms.gle/48eQR3cbqZMoFxMr8',
-  partyUrl: '', // Party package form link. Until it's set, party buttons open Instagram DMs.
-  instagramDm: 'https://ig.me/m/luxurybitesbyb',
+  partyUrl: '', // Party package form link. Until it's set, party buttons start an email to B.
+  email: 'bmartin@luxurybitesbyb.co',
   entries: {
     berrySize: 1180843532, berryChocolate: 611222562, berryAddons: 275457890, berryTheme: 1101649226,
     berryGlitter: 1883889557, berryLettering: 1433846550,
@@ -58,13 +58,11 @@ const PRODUCTS = [
   { id: 'oreo', cat: 'dipped', group: 'treats', rn: 'v.', tone: 'oreo', name: 'Chocolate-Covered Oreos', entry: 254092139,
     blurb: 'Oreo cookies dipped in chocolate and dressed to match.', note: 'In milk, dark or white chocolate',
     sizes: [['Dozen', 30, 'a dozen']], choc: CHOC, color: true, touches: true },
-  { id: 'rods', cat: 'dipped', group: 'treats', rn: 'vi.', tone: 'pretz', name: 'Chocolate-Covered Pretzel Rods', entry: 750810788,
-    blurb: 'Salty-sweet pretzel rods, dipped and drizzled.', note: 'Salty and sweet, drizzled',
-    sizes: [['Dozen', 25, 'a dozen']], choc: CHOC, color: true, touches: true },
-  { id: 'twists', cat: 'dipped', group: 'treats', rn: 'vii.', tone: 'pretz', name: 'Chocolate-Covered Pretzel Twists', entry: 1763409808,
-    blurb: 'Pretzel twists with a chocolate coat and a drizzle on top.', note: 'Salty and sweet, twisted',
-    sizes: [['Dozen', 25, 'a dozen']], choc: CHOC, color: true, touches: true },
-  { id: 'apple', cat: 'apples', group: 'apples', rn: 'viii.', tone: 'apple', name: 'Candy Apples', each: true, max: 6,
+  { id: 'pretzels', cat: 'dipped', group: 'treats', rn: 'vi.', tone: 'pretz', photo: 'rods', name: 'Chocolate-Covered Pretzels',
+    blurb: 'Salty-sweet pretzel rods or twists, dipped in chocolate and drizzled.', note: 'Rods or twists, by the dozen',
+    sizes: [['Pretzel rods (dozen)', 25, 'a dozen pretzel rods', 750810788], ['Pretzel twists (dozen)', 25, 'a dozen pretzel twists', 1763409808]],
+    choc: CHOC, color: true, touches: true },
+  { id: 'apple', cat: 'apples', group: 'apples', rn: 'vii.', tone: 'apple', name: 'Candy Apples', each: true, max: 6,
     blurb: 'Crisp apples in a glassy candy shell, in ten flavours. Go classic, super sour, or Candy Land, rolled in candy.', note: 'Classic, super sour or Candy Land',
     sizes: [['Classic', 6, 'a classic candy apple', 564027356, 1205309175], ['Super sour', 7, 'a super sour candy apple', 78937848, 695681141],
       ['Candy Land', 8, 'a Candy Land candy apple', 344789356, 765128514]],
@@ -143,7 +141,8 @@ function totals() {
 function renderHomeList() {
   $('#homeList').innerHTML = PRODUCTS.map(p => {
     const min = Math.min(...p.sizes.map(s => s[1]));
-    const small = p.each ? 'Each' : p.sizes.length > 1 ? 'From' : p.sizes[0][0];
+    const varied = new Set(p.sizes.map(s => s[1])).size > 1;
+    const small = p.each ? 'Each' : varied ? 'From' : p.sizes.length > 1 ? 'Dozen' : p.sizes[0][0];
     return `<div class="row" data-goto="${p.id}" role="link" tabindex="0"><span class="i">${p.rn}</span><h3>${p.name}</h3><p>${p.note}</p><span class="p">${money(min)}<small>${small}</small></span></div>`;
   }).join('');
 }
@@ -172,7 +171,7 @@ function touchesHTML(p, b) {
 function treatHTML(p) {
   const b = build[p.id], k = inSheet(p.id);
   return `<article class="treat pad" id="t-${p.id}">
-    <figure><div class="ph ${p.tone}" data-label="Photo">${photo(p.id, p.name)}</div><figcaption class="cap">Fig. ${PRODUCTS.indexOf(p) + 2}: ${p.name}.</figcaption></figure>
+    <figure><div class="ph ${p.tone}" data-label="Photo">${photo(p.photo || p.id, p.name)}</div><figcaption class="cap">Fig. ${PRODUCTS.indexOf(p) + 2}: ${p.name}.</figcaption></figure>
     <div>
       <span class="i">${p.rn}</span>${k ? `<span class="incart">${k} on your sheet</span>` : ''}
       <h2>${p.name}</h2><p class="blurb">${p.blurb}</p>
@@ -199,7 +198,7 @@ function rerenderTreat(pid, focusKey) {
   if (focusKey) document.querySelector(`#t-${pid} [data-s="${focusKey}"]`)?.focus();
 }
 const meas = document.createElement('span');
-meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-family:'Bodoni Moda',serif;font-style:italic";
+meas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;visibility:hidden;white-space:pre;font-family:'Bodoni Moda',serif;font-style:italic";
 document.body.appendChild(meas);
 function fitSelects() {
   $$('.sentence select').forEach(sel => {
@@ -366,9 +365,10 @@ function prefillUrl(T) {
     }
   }
   const treats = sheet.filter(l => byId[l.pid].group === 'treats');
+  const choice = (p, f) => p.choc ? p.choc[f.choc][1] : p.flavors[f.flavor][1];
   PRODUCTS.filter(p => p.group === 'treats').forEach(p => {
-    const f = lines(p.id)[0];
-    if (f) add(p.entry, p.choc ? p.choc[f.choc][1] : p.flavors[f.flavor][1]);
+    if (p.entry) { const f = lines(p.id)[0]; if (f) add(p.entry, choice(p, f)); return; }
+    p.sizes.forEach((sz, i) => { const f = lines(p.id).find(l => l.size === i); if (f) add(sz[3], choice(p, f)); });
   });
   uniq(treats.flatMap(l => l.touches)).forEach(id => add(E.treatAddons, TOUCHES.find(t => t.id === id).treat));
 
@@ -516,14 +516,19 @@ document.addEventListener('mouseover', e => {
   const r = e.target.closest('.row');
   if (r) {
     const p = byId[r.dataset.goto];
-    if (!peek.classList.contains(p.tone)) { peek.className = `peek show ${p.tone}`; peek.innerHTML = photo(p.id); }
+    if (!peek.classList.contains(p.tone)) { peek.className = `peek show ${p.tone}`; peek.innerHTML = photo(p.photo || p.id); }
     peek.classList.add('show');
   } else if (!e.target.closest('#peek')) peek.classList.remove('show');
 });
 document.addEventListener('mousemove', e => { if (peek.classList.contains('show')) peek.style.transform = `translate(${e.clientX + 24}px,${e.clientY - 130}px)`; });
 
 /* party buttons and the plain order-form links */
-$$('[data-partyform]').forEach(a => { a.href = FORM.partyUrl || FORM.instagramDm; a.target = '_blank'; a.rel = 'noopener'; });
+$$('[data-partyform]').forEach(a => {
+  if (FORM.partyUrl) { a.href = FORM.partyUrl; a.target = '_blank'; a.rel = 'noopener'; return; }
+  const subject = `Party bundle request: ${a.dataset.bundle || 'Party bundle'}`;
+  const body = 'Hi B.,\n\nI\'d like to request a party bundle.\n\nBundle: ' + (a.dataset.bundle || '') + '\nEvent date:\nPickup or delivery:\nMy two colours / theme:\nOccasion:\nAdd-ons (e.g. candy apples, cake pop swap):\n\nThank you!';
+  a.href = `mailto:${FORM.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+});
 $$('[data-form-link]').forEach(a => { a.href = FORM.shortUrl; });
 
 if (od.date && daysUntil(od.date) < 1) od.date = '';

@@ -1,9 +1,11 @@
 /* Luxury Bites by B. — built from mockup D (full site). The rules below are D's originals;
    additions for the live build are at the end of the file. */
-:root{--paper:#f3eee6;--paper2:#ebe4d8;--ink:#141010;--muted:#6f655c;--body:#3a322c;--accent:#7d1d2c;--gold:#c9a46a;--rule:#141010;--soft:#cfc6b8}
+/* Colours match B.'s order form (sky blue #e4f6fb, stripe #a6e1f0, teal-blue buttons) and the party flyer
+   (baby blue and warm beige panels, black borders, marble). */
+:root{--paper:#f8f7f4;--paper2:#e4f6fb;--ink:#2b1f19;--muted:#6b5b50;--body:#3f332c;--accent:#0b7a93;--gold:#a6e1f0;--rule:#2b1f19;--soft:#d8cdbf;--blue:#dcebf8;--sky:#a6e1f0;--taupe:#e7dccb;--latte:#c8ab8c;--mocha:#7b5a44;--cocoa:#3a2a21}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-body{background:var(--paper);color:var(--ink);font:16px/1.55 'DM Sans',system-ui,sans-serif}
+body{background:linear-gradient(118deg,transparent 0 41%,rgba(160,140,120,.09) 41.6%,transparent 43.5%),linear-gradient(32deg,transparent 0 64%,rgba(160,140,120,.07) 64.4%,transparent 66%),linear-gradient(160deg,transparent 0 20%,rgba(160,140,120,.06) 20.3%,transparent 21.6%),var(--paper);background-attachment:fixed;color:var(--ink);font:16px/1.55 'DM Sans',system-ui,sans-serif}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0}
@@ -11,7 +13,7 @@ button{cursor:pointer;background:none;border:0}
 /* details still needed from B. are marked with an asterisk */
 .tbd{font-style:inherit;color:inherit}
 .tbd::after{content:"*";color:var(--accent);font-weight:700;font-style:normal;margin-left:2px}
-.draftbar{background:var(--ink);color:#e0d6c8;font-size:12.5px;text-align:center;padding:7px 12px}
+.draftbar{background:var(--cocoa);color:#eadfd2;font-size:12.5px;text-align:center;padding:7px 12px}
 .kicker{font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
 .kicker .a{color:var(--accent)}
 .cap{font:italic 400 14px/1.4 'Bodoni Moda',serif;color:var(--muted);margin-top:10px}
@@ -123,11 +125,11 @@ button{cursor:pointer;background:none;border:0}
 .blurb{font-size:17px;color:var(--body);max-width:480px}
 .prices{margin:22px 0 26px;max-width:420px}
 .prices div,.ln{display:flex;align-items:baseline;gap:8px;padding:5px 0;font-size:15px}
-.prices div::after,.ln::after{content:'';order:1;flex:1;border-bottom:1.5px dotted #b9ae9d;transform:translateY(-4px)}
+.prices div::after,.ln::after{content:'';order:1;flex:1;border-bottom:1.5px dotted #9fb3bc;transform:translateY(-4px)}
 .prices div span:last-child,.ln span:last-child{order:2;font:600 18px 'Bodoni Moda',serif}
 .sentence{font:400 clamp(21px,2.2vw,26px)/1.75 'Bodoni Moda',serif;max-width:580px;padding-top:20px;border-top:1px solid var(--soft)}
 .sentence select{appearance:none;-webkit-appearance:none;border:0;border-bottom:1.5px solid var(--accent);border-radius:0;padding:0 18px 0 2px;font-family:'Bodoni Moda',serif;font-style:italic;font-size:inherit;line-height:1.3;color:var(--accent);cursor:pointer;max-width:100%;
-  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237d1d2c'/%3E%3C/svg%3E") no-repeat right 3px center}
+  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%230b7a93'/%3E%3C/svg%3E") no-repeat right 3px center}
 .sentence select:focus{outline:2px solid var(--gold);outline-offset:2px}
 .addrow{display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap}
 .qty{display:inline-flex;align-items:center;border:1px solid var(--ink);height:46px}
@@ -204,15 +206,15 @@ button{cursor:pointer;background:none;border:0}
 .fl input,.fl select,.fl textarea{width:100%;border:0;border-bottom:1.5px solid var(--ink);border-radius:0;background:transparent;padding:8px 0;font:400 21px 'Bodoni Moda',serif}
 .fl textarea{min-height:84px;resize:vertical;font-size:19px}
 .fl input:focus,.fl select:focus,.fl textarea:focus{outline:none;border-color:var(--accent)}
-.fl input::placeholder,.fl textarea::placeholder{color:#a79b8d;font-style:italic}
+.fl input::placeholder,.fl textarea::placeholder{color:#8a9aa1;font-style:italic}
 .toggle{display:flex;border:1px solid var(--ink)}
 .toggle button{flex:1;padding:12px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
 .toggle button.on{background:var(--ink);color:var(--paper)}
 .note{font-size:14px;color:var(--body);margin-top:10px}
-.note.warn{color:#7a4d0c;background:#f6e3bf;padding:10px 12px}
+.note.warn{color:var(--ink);background:var(--taupe);border-left:3px solid var(--ink);padding:10px 12px}
 .err{border-color:#b3261e!important}
 .errmsg{color:#b3261e;font-weight:700;font-size:14px;margin-top:14px}
-.ledger{position:sticky;top:84px;align-self:start;background:var(--paper2);padding:32px;border-top:4px solid var(--ink)}
+.ledger{position:sticky;top:84px;align-self:start;background:#fff;padding:32px;border:1px solid var(--soft);border-top:10px solid var(--sky);border-radius:8px}
 .ledger .kicker{display:block;margin-bottom:16px}
 .ledger .tot{font-weight:700;font-size:16px;border-top:1px solid var(--rule);margin-top:10px;padding-top:16px}
 .ledger .tot span:last-child{font-size:30px}
@@ -332,3 +334,55 @@ footer .links .sp{margin-left:auto;color:var(--muted)}
   .marquee div{animation:none}
   *{transition:none!important}
 }
+
+/* ---------- flyer-style panels ---------- */
+.top{background:rgba(248,247,244,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.overlay{background:var(--paper)}
+.pull{background:var(--blue)}
+.row:hover{background:var(--paper2)}
+.handoff{background:var(--paper2);border-left-color:var(--accent)}
+.igrid .ph,.spread .ph,.fig .ph,.feature .ph,.treat .ph,.article .ph{border:4px solid var(--ink)}
+.tiers{gap:28px}
+.tier,.tier:first-child,.tier:last-child{padding:30px 28px 32px;border:5px solid var(--ink);background:var(--taupe)}
+.tier:nth-child(2){background:var(--blue)}
+.tier ul{border-top-color:rgba(20,20,20,.25)}
+.tier li{border-bottom-color:rgba(20,20,20,.18)}
+.tier .note-sm{font-size:13px;color:var(--body);margin:-14px 0 24px}
+.policy{border:5px solid var(--ink);background:#fff;padding:34px 36px;display:grid;grid-template-columns:1fr 1.5fr;gap:40px;align-items:start}
+.policy .script{font:400 clamp(34px,4vw,52px)/1 'Pinyon Script',cursive}
+.policy h3{font:400 clamp(28px,3vw,40px)/1.05 'Bodoni Moda',serif;text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+.policy ul{list-style:none;border-top:1px solid var(--rule)}
+.policy li{padding:13px 0 13px 26px;border-bottom:1px solid var(--soft);position:relative;color:var(--body)}
+.policy li::before{content:"⚜";position:absolute;left:0;top:13px;color:var(--accent)}
+.policy li b{color:var(--ink)}
+.policy .contact{margin-top:22px;font-size:14px;color:var(--body)}
+.policy .contact a{color:var(--accent);border-bottom:1px solid var(--accent)}
+@media (max-width:900px){
+  .tier,.tier:first-child,.tier:last-child{border:5px solid var(--ink);padding:26px 22px}
+  .policy{grid-template-columns:1fr;gap:20px;padding:26px 22px}
+}
+
+/* ---------- chocolate & latte ---------- */
+.sechead .num,.phead h1 em,.kicker .a,.row .i,.treat .i,.tier .i,.vals b,.qa>h2,.fp aside button i{color:var(--mocha)}
+.marquee{background:var(--cocoa)}
+.marquee span{color:var(--latte)}
+.sec--taupe{background:var(--taupe)}
+.sec--blue{background:var(--blue)}
+.sec--taupe .row:hover{background:rgba(255,255,255,.45)}
+.treat:nth-child(even){background:var(--taupe)}
+.contents a b{color:var(--mocha)}
+.pull{background:var(--taupe)}
+.pull q em{color:var(--mocha)}
+.ledger{border-top-color:var(--latte)}
+.ledger .dep{color:var(--mocha)}
+.incart,.tier .pick{background:var(--mocha)}
+.send,.addbtn{background:var(--cocoa)}
+.send:hover,.addbtn:hover{background:var(--mocha)}
+.toggle button.on{background:var(--cocoa)}
+.bar{background:var(--cocoa)}
+.bar a,.toast a{color:var(--latte);border-color:var(--latte)}
+.toast{background:var(--cocoa)}
+footer{background:var(--taupe);border-top:5px solid var(--ink)}
+footer .word em{color:var(--mocha)}
+.policy li::before{color:var(--mocha)}
+.tier:nth-child(2){background:var(--blue)}

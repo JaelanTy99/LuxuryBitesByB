@@ -15,8 +15,7 @@ The Treats page (also the hover preview on the home menu list)
   pops.jpg            seashell cake pops
   krisp.jpg           butterfly Rice Krispies
   oreo.jpg            butterfly Oreos
-  rods.jpg            pink and red pretzel rods
-  twists.jpg          blush and sage pretzels (swap in a photo of twists when there is one)
+  rods.jpg            chocolate-covered pretzels (rods or twists)
   apple.jpg           candy apples
 
 Party Edit and The Maker
