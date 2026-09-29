@@ -8,11 +8,11 @@
 <meta property="og:title" content="Luxury Bites by B.">
 <meta property="og:description" content="So rich. So smooth. Elegantly sweet. Luxury treats made to order in North Charlotte.">
 <meta property="og:image" content="images/hero.jpg">
-<meta name="theme-color" content="#f3eee6">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f3eee6'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-style='italic' font-size='30' fill='%237d1d2c' text-anchor='middle'%3ELB%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#f8f7f4">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e4f6fb'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-style='italic' font-size='30' fill='%237b5a44' text-anchor='middle'%3ELB%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=DM+Sans:wght@400;500;700&family=Pinyon+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -99,14 +99,14 @@
       <div>
         <p class="kicker"><span class="a">⚜</span> For showers, birthdays &amp; beyond</p>
         <h3>Hosting something <em>special?</em></h3>
-        <p>Party packages to feed a crowd, each styled to your theme. Party orders use their own request form so the details can be planned together.</p>
-        <ul class="mini"><li><span class="tbd">Package one</span> <span class="tbd">$—</span></li><li><span class="tbd">Package two</span> <span class="tbd">$—</span></li><li><span class="tbd">Package three</span> <span class="tbd">$—</span></li></ul>
+        <p>Party bundles from 4 to 8 dozen treats, finished in two colours to match your theme. Book 3–4 weeks ahead.</p>
+        <ul class="mini"><li>Mini Luxe Bundle <span>$140</span></li><li>Classic Bundle <span>$200</span></li><li>Supreme Bundle <span>$285</span></li></ul>
         <a class="cta" href="#/party">Read the Party Edit →</a>
       </div>
     </div>
   </section>
 
-  <section class="sec pad">
+  <section class="sec pad sec--blue">
     <div class="sechead"><span class="num">03</span><h2>The <em>Maker</em></h2><a class="more" href="#/maker">Read the story →</a></div>
     <div class="feature flip">
       <figure><div class="ph pops" data-label="Photo"><img src="images/maker-feature.jpg" alt="White chocolate-covered strawberries with pearl details for a wedding" loading="lazy" onerror="this.remove()"></div><figcaption class="cap">Fig. 5: From Ms. to Mrs., a wedding dozen.</figcaption></figure>
@@ -119,7 +119,7 @@
     </div>
   </section>
 
-  <section class="sec pad">
+  <section class="sec pad sec--taupe">
     <div class="sechead"><span class="num">04</span><h2>How to <em>Order</em></h2><a class="more" href="#/fine-print">The fine print →</a></div>
     <div class="how">
       <div><b>1</b><h3>Fill in the order sheet.</h3><p>Pick your treats, colours and date. B.'s order form then opens with it all filled in. Party packages have their own form.</p></div>
@@ -156,31 +156,47 @@
 <!-- ================= PARTY ================= -->
 <section data-page="party" hidden>
   <div class="phead pad">
-    <p class="kicker"><span class="a">02</span> · Packages</p>
+    <p class="kicker"><span class="a">02</span> · Party bundles</p>
     <h1>The Party <em>Edit</em></h1>
-    <p class="deck">Ways to feed a crowd, all colour-matched to your theme. Party orders go through a separate request form so every detail can be planned together.</p>
+    <p class="deck">Three bundles to feed a crowd, every one finished in two colours of your choice to match your theme and topped with sprinkles.</p>
   </div>
   <section class="sec pad">
-    <p class="note warn" style="margin-bottom:40px">The three packages below are layout samples. <span class="tbd">Replace the names, sizes, prices and contents with B.'s real party packages.</span></p>
     <div class="tiers">
       <div class="tier">
-        <span class="i">i.</span><h3>The Petite</h3><span class="serves">Serves about 12</span>
-        <div class="price"><span class="tbd">$95</span></div><div class="from">Starting at</div>
-        <ul><li>12 chocolate-covered strawberries</li><li>12 cake pops</li><li>6 Rice Krispies</li><li>Colour-matched to your theme</li></ul>
-        <a class="cta" href="#/party" data-partyform>Request the Petite →</a>
+        <span class="i">i.</span><h3>Mini Luxe Bundle</h3><span class="serves">For an intimate event</span>
+        <div class="price">$140</div><div class="from">4 dozen · 48 treats</div>
+        <ul><li>1 dozen chocolate-covered strawberries</li><li>1 dozen chocolate-covered Oreos</li><li>1 dozen chocolate-covered pretzels</li><li>1 dozen Rice Krispies</li></ul>
+        <a class="cta" href="#/party" data-partyform data-bundle="Mini Luxe Bundle ($140)">Request the Mini Luxe →</a>
       </div>
       <div class="tier">
-        <span class="i">ii.<span class="pick">Recommended</span></span><h3>The Signature</h3><span class="serves">Serves about 25</span>
-        <div class="price"><span class="tbd">$175</span></div><div class="from">Starting at</div>
-        <ul><li>24 chocolate-covered strawberries</li><li>24 cake pops</li><li>12 chocolate-covered Oreos</li><li>12 dipped pretzel rods</li><li>Themed toppers &amp; colours</li></ul>
-        <a class="cta" href="#/party" data-partyform>Request the Signature →</a>
+        <span class="i">ii.</span><h3>Classic Bundle</h3><span class="serves">Take your event to the next level</span>
+        <div class="price">$200</div><div class="from">6 dozen · 72 treats</div>
+        <ul><li>2 dozen chocolate-covered strawberries</li><li>2 dozen pretzel rods or knots</li><li>1 dozen chocolate-covered Oreos</li><li>1 dozen Rice Krispies</li></ul>
+        <p class="note-sm">Swap the Rice Krispies for cake pops for an extra $5.</p>
+        <a class="cta" href="#/party" data-partyform data-bundle="Classic Bundle ($200)">Request the Classic →</a>
       </div>
       <div class="tier">
-        <span class="i">iii.</span><h3>The Grand</h3><span class="serves">Serves about 50</span>
-        <div class="price"><span class="tbd">$295</span></div><div class="from">Starting at</div>
-        <ul><li>36 chocolate-covered strawberries</li><li>36 cake pops</li><li>24 chocolate-covered Oreos</li><li>24 dipped pretzel rods</li><li>24 Rice Krispies</li><li>Display-ready packaging</li></ul>
-        <a class="cta" href="#/party" data-partyform>Request the Grand →</a>
+        <span class="i">iii.</span><h3>Supreme Bundle</h3><span class="serves">For a more elevated event</span>
+        <div class="price">$285</div><div class="from">8 dozen · 96 treats</div>
+        <ul><li>3 dozen chocolate-covered strawberries</li><li>1 dozen pretzel rods</li><li>1 dozen pretzel knots</li><li>1 dozen chocolate-covered Oreos</li><li>1 dozen Rice Krispies</li><li>1 dozen cake pops</li></ul>
+        <a class="cta" href="#/party" data-partyform data-bundle="Supreme Bundle ($285)">Request the Supreme →</a>
       </div>
+    </div>
+  </section>
+  <section class="sec pad sec--taupe">
+    <div class="policy">
+      <div>
+        <p class="script">Let's make something</p>
+        <h3>Sweet happen</h3>
+        <p class="contact">Party bundle info &amp; policy. Questions? Email <a href="mailto:bmartin@luxurybitesbyb.co">bmartin@luxurybitesbyb.co</a> or send a DM on <a href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener">Instagram</a>.</p>
+      </div>
+      <ul>
+        <li>A <b>50% non-refundable deposit</b> is due <b>within 24–48 hours of receiving your invoice</b> to secure your date.</li>
+        <li>All bundles include <b>2 colours of your choice</b> to match your theme, <b>topped with sprinkles</b>.</li>
+        <li>Please book at least <b>3–4 weeks in advance</b>.</li>
+        <li>Party bundles include <b>chocolate-covered treats only</b>. Candy apples are available as an add-on for an additional charge.</li>
+        <li>Designs are kept simple yet elegant. Custom requests and add-ons are quoted separately.</li>
+      </ul>
     </div>
   </section>
   <section class="sec pad">
@@ -189,8 +205,8 @@
       <div>
         <p class="kicker"><span class="a">⚜</span> Bespoke</p>
         <h3>The <em>custom</em> table.</h3>
-        <p>Have a bigger vision? Share your date, headcount and theme, and B. will put together a quote. <span class="tbd">Book at least 2 weeks ahead.</span></p>
-        <a class="cta" href="#/party" data-partyform>Request a custom quote →</a>
+        <p>Have a bigger vision? Share your date, headcount and theme, and B. will put together a quote. Please book at least 3–4 weeks ahead.</p>
+        <a class="cta" href="#/party" data-partyform data-bundle="Custom dessert table (quote)">Request a custom quote →</a>
       </div>
     </div>
   </section>
@@ -217,7 +233,7 @@
       <div class="ctas"><a class="cta" href="#/treats">Browse the treats →</a><a class="cta" href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener">Follow @luxurybitesbyb ↗</a></div>
     </div>
   </div>
-  <section class="sec pad">
+  <section class="sec pad sec--taupe">
     <div class="vals">
       <div><b>i.</b><h3>Made to order</h3><p>Every treat is made fresh for your date, never ahead of time.</p></div>
       <div><b>ii.</b><h3>Finished by hand</h3><p>Dipped, drizzled and decorated one piece at a time.</p></div>
@@ -231,7 +247,7 @@
   <div class="phead pad">
     <p class="kicker"><span class="a">04</span> · Questions &amp; answers</p>
     <h1>The Fine <em>Print</em></h1>
-    <p class="deck">Everything worth knowing before you order. Still curious? Send a DM on <a href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener" style="color:var(--accent);border-bottom:1px solid var(--accent)">Instagram</a>.</p>
+    <p class="deck">Everything worth knowing before you order. Still curious? Email <a href="mailto:bmartin@luxurybitesbyb.co" style="color:var(--accent);border-bottom:1px solid var(--accent)">bmartin@luxurybitesbyb.co</a> or send a DM on <a href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener" style="color:var(--accent);border-bottom:1px solid var(--accent)">Instagram</a>.</p>
   </div>
   <div class="fp pad">
     <aside>
@@ -243,13 +259,13 @@
     <div>
       <div class="qa" id="qa-ordering"><h2>i. Ordering</h2>
         <div class="q"><h3>How do I place an order?</h3><p>Add treats from <a href="#/treats">The Treats</a> to your order sheet and pick your date. B.'s order form then opens with your treats filled in: add your name and contact details and submit. An invoice with your order details and payment instructions comes by email. Prefer to start from scratch? <a data-form-link href="https://forms.gle/48eQR3cbqZMoFxMr8" target="_blank" rel="noopener">Use the order form</a>.</p></div>
-        <div class="q"><h3>How far ahead should I order?</h3><p><span class="tbd">Recommended lead time, e.g. at least 1 week ahead, and 2+ weeks for party packages.</span></p></div>
+        <div class="q"><h3>How far ahead should I order?</h3><p>Party bundles: at least 3–4 weeks ahead. <span class="tbd">Lead time for everyday orders</span></p></div>
         <div class="q"><h3>Can I order last-minute?</h3><p>Orders needed within 24–48 hours may be accepted based on availability, with a $10 rush fee.</p></div>
         <div class="q"><h3>Can you match my party colours?</h3><p>Yes. Choose a colour theme for each treat, or pick a custom theme and describe it in the notes, e.g. "pink and purple Hello Kitty theme" or "3 blue-and-white marble, 3 plain white".</p></div>
         <div class="q"><h3>Can you add names or words?</h3><p>Yes. Chocolate letters and molds can spell a name or a saying like "I love you". The custom dozen of strawberries includes them.</p></div>
       </div>
       <div class="qa" id="qa-payment"><h2>ii. Payment</h2>
-        <div class="q"><h3>How does payment work?</h3><p>A 50% deposit confirms every order. The remaining balance is due at pickup or delivery.</p></div>
+        <div class="q"><h3>How does payment work?</h3><p>A 50% deposit confirms every order. For party bundles it's due within 24–48 hours of receiving your invoice. The remaining balance is due at pickup or delivery.</p></div>
         <div class="q"><h3>Is the deposit refundable?</h3><p>No. The 50% deposit is non-refundable.</p></div>
         <div class="q"><h3>How can I pay?</h3><p><span class="tbd">Accepted payment apps or methods (Cash App, Zelle, Apple Pay, etc.)</span></p></div>
       </div>
@@ -275,7 +291,7 @@
   <div class="word">Luxury <em>Bites</em></div>
   <div class="links">
     <a href="#/treats">The Treats</a><a href="#/party">The Party Edit</a><a href="#/maker">The Maker</a><a href="#/fine-print">The Fine Print</a>
-    <a href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener">Instagram ↗</a><a data-form-link href="https://forms.gle/48eQR3cbqZMoFxMr8" target="_blank" rel="noopener">Classic order form ↗</a>
+    <a href="https://www.instagram.com/luxurybitesbyb/" target="_blank" rel="noopener">Instagram ↗</a><a href="mailto:bmartin@luxurybitesbyb.co">Email ↗</a><a data-form-link href="https://forms.gle/48eQR3cbqZMoFxMr8" target="_blank" rel="noopener">Classic order form ↗</a>
     <span class="sp">© Luxury Bites by B. · North Charlotte</span>
   </div>
 </footer>
