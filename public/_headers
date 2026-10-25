@@ -1,12 +1,13 @@
 # Security headers for luxurybitesbyb.co (Netlify reads this file automatically).
 # The site loads only its own files: no outside scripts, fonts or frames are allowed.
-# When Square payments are added, Square's domains get added to script-src, frame-src
-# and connect-src (and "payment" to Permissions-Policy), and nothing else.
+# Square payments use Square's hosted checkout: the page only calls this site's own
+# /api/checkout function, then moves the customer to Square's page. So no Square domains are
+# needed here, and the browser payment API stays switched off (payment=()).
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
   Strict-Transport-Security: max-age=31536000

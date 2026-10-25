@@ -119,8 +119,8 @@
   <section class="sec pad sec--blue">
     <div class="sechead"><span class="num">04</span><h2>How to <em>Order</em></h2><a class="more" href="#/fine-print">The fine print →</a></div>
     <div class="how">
-      <div><b>1</b><h3>Fill in the order sheet.</h3><p>Pick your treats, colours and date. B.'s order form then opens with it all filled in. Party packages have their own form.</p></div>
-      <div><b>2</b><h3>Pay the deposit.</h3><p>Your invoice comes by email. 50% holds your date and is non-refundable.</p></div>
+      <div><b>1</b><h3>Fill in the order sheet.</h3><p>Pick your treats, colours and date. Party bundles are requested by email.</p></div>
+      <div><b>2</b><h3>Pay the deposit.</h3><p>50% on Square's secure checkout holds your date. It's non-refundable if you cancel, and refunded in full if B. can't take your date.</p></div>
       <div><b>3</b><h3>Enjoy.</h3><p>Pick up or get it delivered, and settle the balance then.</p></div>
     </div>
   </section>
@@ -255,20 +255,20 @@
     </aside>
     <div>
       <div class="qa" id="qa-ordering"><h2>i. Ordering</h2>
-        <div class="q"><h3>How do I place an order?</h3><p>Add treats from <a href="#/treats">The Treats</a> to your order sheet and pick your date. B.'s order form then opens with your treats filled in: add your name and contact details and submit. An invoice with your order details and payment instructions comes by email. Prefer to start from scratch? <a data-form-link href="https://forms.gle/48eQR3cbqZMoFxMr8" target="_blank" rel="noopener noreferrer">Use the order form</a>.</p></div>
+        <div class="q"><h3>How do I place an order?</h3><p>Add treats from <a href="#/treats">The Treats</a> to your order sheet, pick your date, and pay the 50% deposit on Square's secure checkout, where you also add your name and contact details. B. then confirms your order. Prefer not to pay online? <a data-form-link href="https://forms.gle/48eQR3cbqZMoFxMr8" target="_blank" rel="noopener noreferrer">Use B.'s order form</a> and an invoice follows by email.</p></div>
         <div class="q"><h3>How far ahead should I order?</h3><p>Party bundles: at least 3–4 weeks ahead. <span class="tbd">Lead time for everyday orders</span></p></div>
-        <div class="q"><h3>Can I order last-minute?</h3><p>Orders needed within 24–48 hours may be accepted based on availability, with a $10 rush fee.</p></div>
+        <div class="q"><h3>Can I order last-minute?</h3><p>Orders needed within 24–48 hours may be accepted based on availability, with a $10 rush fee. Rush orders can't be paid online: <a href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">message B. on Instagram</a> first.</p></div>
         <div class="q"><h3>Can you match my party colours?</h3><p>Yes. Choose a colour theme for each treat, or pick a custom theme and describe it in the notes, e.g. "pink and purple Hello Kitty theme" or "3 blue-and-white marble, 3 plain white".</p></div>
         <div class="q"><h3>Can you add names or words?</h3><p>Yes. Chocolate letters and molds can spell a name or a saying like "I love you". The custom dozen of strawberries includes them.</p></div>
       </div>
       <div class="qa" id="qa-payment"><h2>ii. Payment</h2>
-        <div class="q"><h3>How does payment work?</h3><p>A 50% deposit confirms every order. For party bundles it's due within 24–48 hours of receiving your invoice. The remaining balance is due at pickup or delivery.</p></div>
-        <div class="q"><h3>Is the deposit refundable?</h3><p>No. The 50% deposit is non-refundable.</p></div>
-        <div class="q"><h3>How can I pay?</h3><p><span class="tbd">Accepted payment apps or methods (Cash App, Zelle, Apple Pay, etc.)</span></p></div>
+        <div class="q"><h3>How does payment work?</h3><p>A 50% deposit confirms every order. For everyday orders you pay it online, on Square's secure checkout, when you place your order. For party bundles it's due within 24–48 hours of receiving your invoice. The remaining balance is due at pickup or delivery.</p></div>
+        <div class="q"><h3>Is the deposit refundable?</h3><p>It's non-refundable if you cancel. If B. can't take your date, your deposit is refunded in full.</p></div>
+        <div class="q"><h3>How can I pay?</h3><p>The deposit is paid by card on Square's secure checkout. Your card details go to Square and never touch this site. For the balance: <span class="tbd">accepted payment apps or methods at pickup or delivery (Cash App, Zelle, card, etc.)</span></p></div>
       </div>
       <div class="qa" id="qa-pickup"><h2>iii. Pickup &amp; delivery</h2>
-        <div class="q"><h3>Where is pickup?</h3><p>North Charlotte (28262). <span class="tbd">The exact address and instructions are sent with your invoice.</span></p></div>
-        <div class="q"><h3>Do you deliver?</h3><p>Yes, around Charlotte. Delivery is complimentary on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, and Raleigh or long distance is $50.</p></div>
+        <div class="q"><h3>Where is pickup?</h3><p>North Charlotte (28262). <span class="tbd">The exact address and instructions come when B. confirms your order.</span></p></div>
+        <div class="q"><h3>Do you deliver?</h3><p>Yes, around Charlotte. Delivery is complimentary on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, and Raleigh or long distance is $50. If your delivery fee is quoted, it's added to the balance you pay at delivery.</p></div>
       </div>
       <div class="qa" id="qa-treats"><h2>iv. The treats</h2>
         <div class="q"><h3>What about allergies?</h3><p><span class="tbd">Allergen statement, e.g. which common allergens your kitchen handles.</span></p></div>
@@ -276,6 +276,11 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- ================= THANK YOU (after paying on Square) ================= -->
+<section data-page="thanks" hidden>
+  <div id="thanksPage"></div>
 </section>
 
 <!-- ================= ORDER SHEET ================= -->
@@ -297,6 +302,7 @@
 <div class="bar"><div><b id="bartotal">$0</b><small id="baritems"></small></div><a href="#/order">View order sheet →</a></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="tmsg"></span><a href="#/order">View sheet</a></div>
 
+<script src="menu.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

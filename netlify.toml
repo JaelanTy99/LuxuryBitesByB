@@ -1,0 +1,11 @@
+# Netlify settings for luxurybitesbyb.co. Only public/ is published; the checkout function's
+# source in netlify/functions/ runs on Netlify's servers and is never served to visitors.
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
