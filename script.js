@@ -79,7 +79,9 @@ const pad = n => String(n).padStart(2, '0');
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = new Date(); today.setHours(0, 0, 0, 0);
 const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-const photo = (name, alt = '') => `<img src="images/${name}.jpg" alt="${esc(alt)}" loading="lazy" onerror="this.remove()">`;
+const photo = (name, alt = '') => `<img src="images/${name}.jpg" alt="${esc(alt)}" loading="lazy">`;
+// A missing photo is removed so the colour placeholder shows (done here, not inline, so the strict security policy allows it).
+document.addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.remove(); }, true);
 
 const freshBuild = p => ({ size: p.def || 0, choc: 0, flavor: 0, topping: 0, color: 0, touches: [], glitter: 0, qty: 1 });
 let sheet = [], seq = 0, cat = 'all';
@@ -87,13 +89,40 @@ const build = Object.fromEntries(PRODUCTS.map(p => [p.id, freshBuild(p)]));
 let od = { date: '', time: '', method: 'Pickup', distance: 'near', occasion: '', notes: '', lettering: '', agree: false, sent: null };
 
 /* ---------- saving the sheet between visits ---------- */
+// Anything read back from the browser is treated as untrusted: only known menu choices survive,
+// numbers are forced to whole numbers in range, and the price is recalculated from the menu.
+function cleanLine(l) {
+  const p = l && byId[l.pid];
+  if (!p) return null;
+  const idx = (v, list) => Number.isInteger(v) && v >= 0 && v < list.length ? v : null;
+  const size = idx(l.size, p.sizes); if (size == null) return null;
+  const line = {
+    key: Number.isInteger(l.key) ? l.key : 0, pid: p.id, size,
+    choc: p.choc ? idx(l.choc, p.choc) : null,
+    flavor: p.flavors ? idx(l.flavor, p.flavors) : null,
+    topping: p.toppingSize != null && size === p.toppingSize ? idx(l.topping, TOPPINGS) : null,
+    color: p.color ? idx(l.color, COLORS) : null,
+    glitter: p.glitter ? Math.min(12, Math.max(0, parseInt(l.glitter, 10) || 0)) : 0,
+    touches: p.touches && Array.isArray(l.touches) ? l.touches.filter(id => TOUCHES.some(t => t.id === id)).sort() : [],
+    qty: Math.min(p.max || 20, Math.max(1, parseInt(l.qty, 10) || 1)),
+  };
+  if ((p.choc && line.choc == null) || (p.flavors && line.flavor == null)) return null;
+  line.touchKey = line.touches.join(',');
+  line.unit = unitOf(p, { size, choc: line.choc ?? 0, touches: line.touches, glitter: line.glitter });
+  return line;
+}
 const STORE = 'luxurybites-sheet-v1';
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved && Array.isArray(saved.sheet)) {
-    sheet = saved.sheet.filter(l => byId[l.pid]);
-    seq = saved.seq || sheet.length;
-    Object.assign(od, saved.od || {}, { agree: false, sent: null });
+    sheet = saved.sheet.map(cleanLine).filter(Boolean);
+    seq = Math.max(sheet.length, ...sheet.map(l => l.key), Number.isInteger(saved.seq) ? saved.seq : 0);
+    const so = saved.od || {}, str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+    Object.assign(od, {
+      date: /^\d{4}-\d{2}-\d{2}$/.test(so.date) ? so.date : '', time: /^\d{2}:\d{2}$/.test(so.time) ? so.time : '',
+      method: so.method === 'Delivery' ? 'Delivery' : 'Pickup', distance: DISTANCES.some(d => d[0] === so.distance) ? so.distance : 'near',
+      occasion: OCCASIONS.includes(so.occasion) ? so.occasion : '', notes: str(so.notes, 1000), lettering: str(so.lettering, 120),
+      agree: false, sent: null });
   }
 } catch (_) { /* storage unavailable: start fresh */ }
 function save() {
@@ -311,7 +340,7 @@ function renderSent(el) {
     <p class="kicker"><span class="a">⚜</span> One more step</p>
     <h1>Almost there, <em>Luxe Babe.</em></h1>
     <p class="deck">${s.opened ? "B.'s order form opened in a new tab with your treats filled in. Finish it there to send your request." : "Open B.'s order form below. Your treats are already filled in. Finish it there to send your request."}</p>
-    <a class="big" href="${esc(s.url)}" target="_blank" rel="noopener">${s.opened ? 'Open the form again ↗' : "Open B.'s order form ↗"}</a>
+    <a class="big" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${s.opened ? 'Open the form again ↗' : "Open B.'s order form ↗"}</a>
     <div class="how">
       <div><b>1</b><h3>Finish the form.</h3><p>Add your name, phone and email${s.method === 'Delivery' ? ' and delivery address' : ''}, then submit.</p></div>
       <div><b>2</b><h3>Invoice arrives.</h3><p>By email, with your order details and payment instructions.</p></div>
@@ -524,7 +553,7 @@ document.addEventListener('mousemove', e => { if (peek.classList.contains('show'
 
 /* party buttons and the plain order-form links */
 $$('[data-partyform]').forEach(a => {
-  if (FORM.partyUrl) { a.href = FORM.partyUrl; a.target = '_blank'; a.rel = 'noopener'; return; }
+  if (FORM.partyUrl) { a.href = FORM.partyUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; return; }
   const subject = `Party bundle request: ${a.dataset.bundle || 'Party bundle'}`;
   const body = 'Hi B.,\n\nI\'d like to request a party bundle.\n\nBundle: ' + (a.dataset.bundle || '') + '\nEvent date:\nPickup or delivery:\nMy two colours / theme:\nOccasion:\nAdd-ons (e.g. candy apples, cake pop swap):\n\nThank you!';
   a.href = `mailto:${FORM.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
