@@ -1,7 +1,9 @@
 /* Luxury Bites by B. — built from mockup D (full site).
-   The menu, prices and options come from B.'s Google order form, and the order sheet hands off
-   to that form with the customer's treats already filled in. When the Google Form changes,
-   update the matching text here: each form value must match the form's wording exactly. */
+   The menu, prices and options live in menu.js (shared with the checkout function). The order sheet
+   sends customers to Square's hosted checkout to pay the 50% deposit; B.'s Google order form, with
+   the treats already filled in, is the fallback when online payment isn't available. When the
+   Google Form changes, update the matching text here and in menu.js: each form value must match
+   the form's wording exactly. */
 
 const FORM = {
   url: 'https://docs.google.com/forms/d/e/1FAIpQLSfC2lgxJJqR9lviBGhhkU86Wy8gDxEkJFHJ7Pdfm-07_UrnuQ/viewform',
@@ -16,65 +18,10 @@ const FORM = {
     method: 544941931, date: 1099739373, time: 1743114714,
   },
 };
-const RUSH_FEE = 10;
-const FREE_DELIVERY_MIN = 100;
-const GLITTER = { price: 5, form: 'Glitter Berry(s) + ($5)' };
-
-// [label in the sentence, value on the Google Form, extra cost]
-const CHOC = [['milk', 'Milk'], ['dark', 'Dark'], ['white', 'White']];
-const BERRY_CHOC = [...CHOC, ['white & milk', 'White / Milk ($+5)', 5], ['milk & dark', 'Milk/Dark Mix ($+5)', 5], ['white & dark', 'White/Dark ($+5)', 5]];
-const APPLE_FLAVORS = ['Blue Raspberry', 'Watermelon', 'Fruit Punch', 'Mango', 'Pineapple', 'Lemon', 'Peach', 'Grape', 'Cherry', 'Cotton Candy'].map(f => [f.toLowerCase(), f]);
-const TOPPINGS = ['Jolly Rancher', 'Starburst', 'Nerds', 'Cotton Candy'].map(t => [t, t]);
-const COLORS = ['classic white & gold', 'blush pink & gold', 'sunshine yellow', 'emerald green', "robin's egg blue", 'lavender', 'ruby red', 'a custom theme (describe in notes)'];
-const TOUCHES = [
-  { id: 'topper', label: 'Birthday or holiday topper', price: 1, berry: 'Happy Birthday/Holiday Topper + ($1)', treat: 'Happy Birthday/Holiday Topper + ($1)' },
-  { id: 'letters', label: 'Chocolate letters & molds', price: 5, berry: 'Chocolate Letters and molds + ($5)', treat: 'Chocolate Letters and molds + ($5)' },
-  { id: 'sanding', label: 'Sanding sugar', price: 3, berry: 'Sanding Sugar + ($3)', treat: 'Sanding Sugar + ($3)' },
-  { id: 'hint', label: 'Hint of glitter', price: 2, berry: 'Hint of Glitter + ($2)', treat: 'Hint of Glitter + ($2)' },
-  { id: 'knots', label: '6 pretzel knots', price: 5, berry: '(6) Pretzel Knots+ ($5)', treat: 'Pretzel Knots+ ($5)' },
-  { id: 'luster', label: 'Luster dust', price: 3, berry: 'Luster Dust + ($3)', treat: 'Luster Dust + ($3)' },
-  { id: 'sprinkles', label: 'Sprinkles', price: 2, berry: 'Sprinkles + ($2)', treat: 'Sprinkles + ($2)' },
-];
-const OCCASIONS = ['Birthday', 'Baby shower', 'Bridal shower', 'Wedding', 'Graduation', 'Anniversary', 'Holiday', 'Gift / thank-you', 'Just because'];
-const DISTANCES = [['near', 'Within 10 miles'], ['mid', '10–15 miles'], ['far', '15+ miles'], ['long', 'Raleigh or long distance']];
-
-// sizes: [menu label, price, phrase in the sentence, form value]. Candy apple "sizes" are the three kinds,
-// each with its own quantity and flavour questions on the form.
-const PRODUCTS = [
-  { id: 'straw', cat: 'berries', group: 'berries', rn: 'i.', tone: 'straw', name: 'Chocolate-Covered Strawberries',
-    blurb: 'Juicy strawberries hand-dipped in rich chocolate and finished to match your moment.', note: 'Half dozen to custom dozen',
-    sizes: [['Half dozen (6)', 25, 'a half dozen', 'Half Dozen (6): $25'], ['9 count', 30, 'a nine-count box', '9 Count: $30'],
-      ['Dozen (12)', 40, 'a dozen', 'Dozen (12): $40'], ['Custom dozen', 45, 'a custom dozen, with lettering or molds', 'Custom Dozen (Includes Edible Lettering / Molds): $45']],
-    def: 2, choc: BERRY_CHOC, color: true, touches: true, glitter: true },
-  { id: 'sampler', cat: 'boxes', group: 'treats', rn: 'ii.', tone: 'box', name: 'The Luxe Sampler', entry: 769782341,
-    blurb: 'A little of everything, boxed and ready to gift: 4 strawberries, 2 Rice Krispies, 2 Oreos and 6 pretzel knots.', note: '4 strawberries, 2 Rice Krispies, 2 Oreos, 6 pretzel knots',
-    sizes: [['Sampler box', 35, 'a Luxe Sampler']], choc: CHOC, color: true, touches: true },
-  { id: 'pops', cat: 'dipped', group: 'treats', rn: 'iii.', tone: 'pops', name: 'Cake Pops', entry: 312594885,
-    blurb: 'Moist cake in a smooth chocolate shell, decorated to your theme.', note: 'Vanilla, funfetti, chocolate or red velvet',
-    sizes: [['Dozen', 45, 'a dozen']], flavors: [['vanilla', 'Vanilla'], ['funfetti', 'Funfetti'], ['chocolate', 'Chocolate'], ['red velvet', 'Red velvet']], color: true, touches: true },
-  { id: 'krisp', cat: 'dipped', group: 'treats', rn: 'iv.', tone: 'crisp', name: 'Rice Krispies', entry: 433442062,
-    blurb: 'Crispy rice treats, dipped in chocolate and decorated.', note: 'Dipped and decorated',
-    sizes: [['Dozen', 40, 'a dozen']], choc: CHOC, color: true, touches: true },
-  { id: 'oreo', cat: 'dipped', group: 'treats', rn: 'v.', tone: 'oreo', name: 'Chocolate-Covered Oreos', entry: 254092139,
-    blurb: 'Oreo cookies dipped in chocolate and dressed to match.', note: 'In milk, dark or white chocolate',
-    sizes: [['Dozen', 30, 'a dozen']], choc: CHOC, color: true, touches: true },
-  { id: 'pretzels', cat: 'dipped', group: 'treats', rn: 'vi.', tone: 'pretz', photo: 'rods', name: 'Chocolate-Covered Pretzels',
-    blurb: 'Salty-sweet pretzel rods or twists, dipped in chocolate and drizzled.', note: 'Rods or twists, by the dozen',
-    sizes: [['Pretzel rods (dozen)', 25, 'a dozen pretzel rods', 750810788], ['Pretzel twists (dozen)', 25, 'a dozen pretzel twists', 1763409808]],
-    choc: CHOC, color: true, touches: true },
-  { id: 'apple', cat: 'apples', group: 'apples', rn: 'vii.', tone: 'apple', name: 'Candy Apples', each: true, max: 6,
-    blurb: 'Crisp apples in a glassy candy shell, in ten flavours. Go classic, super sour, or Candy Land, rolled in candy.', note: 'Classic, super sour or Candy Land',
-    sizes: [['Classic', 6, 'a classic candy apple', 564027356, 1205309175], ['Super sour', 7, 'a super sour candy apple', 78937848, 695681141],
-      ['Candy Land', 8, 'a Candy Land candy apple', 344789356, 765128514]],
-    flavors: APPLE_FLAVORS, toppingSize: 2 },
-];
-
-const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+const { GLITTER, TOPPINGS, COLORS, TOUCHES, OCCASIONS, DISTANCES, PRODUCTS,
+  byId, money, unitOf, cleanLine, isRush, quote, niceDate, niceTime, desc, lineText } = LuxuryMenu;
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const money = n => '$' + (Number.isInteger(n) ? n : n.toFixed(2));
-const round2 = n => Math.round(n * 100) / 100;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const cap = s => s[0].toUpperCase() + s.slice(1);
 const pad = n => String(n).padStart(2, '0');
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -89,28 +36,8 @@ const build = Object.fromEntries(PRODUCTS.map(p => [p.id, freshBuild(p)]));
 let od = { date: '', time: '', method: 'Pickup', distance: 'near', occasion: '', notes: '', lettering: '', agree: false, sent: null };
 
 /* ---------- saving the sheet between visits ---------- */
-// Anything read back from the browser is treated as untrusted: only known menu choices survive,
-// numbers are forced to whole numbers in range, and the price is recalculated from the menu.
-function cleanLine(l) {
-  const p = l && byId[l.pid];
-  if (!p) return null;
-  const idx = (v, list) => Number.isInteger(v) && v >= 0 && v < list.length ? v : null;
-  const size = idx(l.size, p.sizes); if (size == null) return null;
-  const line = {
-    key: Number.isInteger(l.key) ? l.key : 0, pid: p.id, size,
-    choc: p.choc ? idx(l.choc, p.choc) : null,
-    flavor: p.flavors ? idx(l.flavor, p.flavors) : null,
-    topping: p.toppingSize != null && size === p.toppingSize ? idx(l.topping, TOPPINGS) : null,
-    color: p.color ? idx(l.color, COLORS) : null,
-    glitter: p.glitter ? Math.min(12, Math.max(0, parseInt(l.glitter, 10) || 0)) : 0,
-    touches: p.touches && Array.isArray(l.touches) ? l.touches.filter(id => TOUCHES.some(t => t.id === id)).sort() : [],
-    qty: Math.min(p.max || 20, Math.max(1, parseInt(l.qty, 10) || 1)),
-  };
-  if ((p.choc && line.choc == null) || (p.flavors && line.flavor == null)) return null;
-  line.touchKey = line.touches.join(',');
-  line.unit = unitOf(p, { size, choc: line.choc ?? 0, touches: line.touches, glitter: line.glitter });
-  return line;
-}
+// Anything read back from the browser is untrusted: cleanLine (menu.js) keeps only known menu choices
+// and recalculates prices from the menu.
 const STORE = 'luxurybites-sheet-v1';
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
@@ -129,42 +56,9 @@ function save() {
   try { localStorage.setItem(STORE, JSON.stringify({ sheet, seq, od: { ...od, agree: false, sent: null } })); } catch (_) { /* ignore */ }
 }
 
-/* ---------- prices ---------- */
-function unitOf(p, b) {
-  let n = p.sizes[b.size][1];
-  if (p.choc) n += p.choc[b.choc][2] || 0;
-  if (p.touches) n += TOUCHES.filter(t => b.touches.includes(t.id)).reduce((s, t) => s + t.price, 0);
-  if (p.glitter) n += b.glitter * GLITTER.price;
-  return n;
-}
-function daysUntil(d) {
-  if (!d) return null;
-  const [y, m, day] = d.split('-').map(Number);
-  return Math.round((new Date(y, m - 1, day) - today) / 864e5);
-}
-function niceDate(d) {
-  const [y, m, day] = d.split('-').map(Number);
-  return new Date(y, m - 1, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-}
-function niceTime(t) {
-  const [h, m] = t.split(':').map(Number);
-  return new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-function totals() {
-  const sub = sheet.reduce((t, l) => t + l.unit * l.qty, 0);
-  const days = daysUntil(od.date);
-  const rush = sub && days != null && days >= 1 && days <= 2 ? RUSH_FEE : 0;
-  let del = 0, delLabel = '';
-  if (sub && od.method === 'Delivery') {
-    if (od.distance === 'near') delLabel = sub >= FREE_DELIVERY_MIN ? 'Free' : 'On your invoice';
-    else if (od.distance === 'mid') del = 10;
-    else if (od.distance === 'far') { del = 15; delLabel = '$15+'; }
-    else del = 50;
-    delLabel = delLabel || money(del);
-  }
-  const total = sub + rush + del, dep = round2(total / 2);
-  return { sub, rush, del, delLabel, total, dep, bal: round2(total - dep), days };
-}
+/* ---------- prices (the rules live in menu.js) ---------- */
+const daysUntil = d => LuxuryMenu.daysUntil(d, today);
+const totals = () => quote(sheet, od, today);
 
 /* ---------- home index ---------- */
 function renderHomeList() {
@@ -262,19 +156,6 @@ function addToSheet(pid) {
   save(); renderAll();
   toast(`Added <i>${l.qty} × ${p.name}</i> to your order sheet.`);
 }
-function desc(l) {
-  const p = byId[l.pid];
-  return [
-    p.sizes[l.size][0],
-    l.choc != null ? p.choc[l.choc][0] + ' chocolate' : '',
-    l.flavor != null ? p.flavors[l.flavor][0] + (p.each ? ' flavour' : '') : '',
-    l.topping != null ? 'rolled in ' + TOPPINGS[l.topping][0] : '',
-    l.color != null ? COLORS[l.color] : '',
-    ...(l.touches || []).map(id => TOUCHES.find(t => t.id === id).label.toLowerCase()),
-    l.glitter ? `${l.glitter} glitter berr${l.glitter > 1 ? 'ies' : 'y'}` : '',
-  ].filter(Boolean).map(cap).join(' · ');
-}
-
 /* ---------- order sheet ---------- */
 function fl(id, label, type = 'text', extra = '', full = false) {
   return `<div class="fl ${full ? 'full' : ''}"><label for="f-${id}">${label}</label><input type="${type}" id="f-${id}" data-f="${id}" value="${esc(od[id])}" ${extra}></div>`;
@@ -293,26 +174,32 @@ function ledgerHTML() {
     <div class="ln"><span>Subtotal</span><span>${money(T.sub)}</span></div>
     ${T.rush ? `<div class="ln"><span>Rush fee (within 48 hrs)</span><span>$10</span></div>` : ''}
     ${T.delLabel ? `<div class="ln"><span>Delivery</span><span>${T.delLabel}</span></div>` : ''}
-    <div class="ln tot"><span>Estimated total</span><span>${money(T.total)}</span></div>
-    <div class="ln dep"><span>Deposit on your invoice (50%)</span><span>${money(T.dep)}</span></div>
+    <div class="ln tot"><span>Order total</span><span>${money(T.total)}</span></div>
+    <div class="ln dep"><span>${isRush(T.days) ? 'Deposit (50%)' : 'Deposit due today (50%)'}</span><span>${money(T.dep)}</span></div>
     <div class="ln"><span>Due at ${where}</span><span>${money(T.bal)}</span></div>
-    <p class="fine">B. confirms the final total on your invoice. Deposits are non-refundable.</p>
-    <label class="agree"><input type="checkbox" id="agree" ${od.agree ? 'checked' : ''}><span>I understand the 50% deposit is non-refundable and the balance is due at ${where}.</span></label>
+    ${T.delExtra === 'quoted' ? `<p class="fine">B. quotes the delivery fee, and it's added to what you pay at delivery.</p>` : ''}
+    ${T.delExtra === 'more' ? `<p class="fine">Delivery is $15 and up. Anything over $15 is added to what you pay at delivery.</p>` : ''}
+    ${isRush(T.days) ? `
+    <div class="rushpay"><p><b>Rush orders can't be paid online.</b> B. needs to check there's room first. Message B. on Instagram with your order and date.</p>
+      <a class="send" id="rushdm" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Message B. on Instagram ↗</a>
+      <p class="fine">Your order summary is copied when you tap, so you can paste it into the message.</p></div>
+    <div id="errmsg"></div>` : `
+    <label class="agree"><input type="checkbox" id="agree" ${od.agree ? 'checked' : ''}><span>I understand the 50% deposit is non-refundable if I cancel, refunded in full if B. can't take my date, and the balance is due at ${where}.</span></label>
     <div id="errmsg"></div>
-    <button class="send" id="send">Continue to B.'s order form ⚜</button>
-    <p class="fine">B.'s order form opens in a new tab with your treats, date and pickup or delivery filled in.</p>`;
+    <button class="send" id="pay" ${paying ? 'disabled' : ''}>${paying ? 'Opening Square…' : `Pay 50% deposit · ${money(T.dep)}`}</button>
+    <p class="fine paynote">You'll pay on Square's secure checkout. Your card details never touch this site. B. then confirms your date.</p>`}`;
 }
 function methodNote() {
-  if (od.method === 'Pickup') return `<p class="note">Pickup is in North Charlotte (28262). <span class="tbd">The exact address and instructions are sent with your invoice.</span></p>`;
+  if (od.method === 'Pickup') return `<p class="note">Pickup is in North Charlotte (28262). <span class="tbd">The exact address and instructions come when B. confirms your order.</span></p>`;
   return `<div class="fl" style="margin-top:22px"><label for="f-distance">How far from North Charlotte?</label><select id="f-distance" data-f="distance">${DISTANCES.map(([v, t]) => `<option value="${v}" ${v === od.distance ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-    <p class="note">Free on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, Raleigh or long distance is $50. You'll add the address on B.'s form.</p>`;
+    <p class="note">Free on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, Raleigh or long distance is $50. You'll add the address on Square's checkout page.</p>`;
 }
 function renderOrder() {
   const el = $('#orderPage');
   if (od.sent) return renderSent(el);
   el.innerHTML = `
     <div class="phead pad"><p class="kicker"><span class="a">05</span> · Order</p><h1>The Order <em>Sheet</em></h1>
-      <p class="deck">Review your selections and tell us when. B.'s order form opens next with everything filled in, and your invoice follows by email.</p></div>
+      <p class="deck">Review your selections and tell us when, then pay the 50% deposit on Square's secure checkout. B. confirms your date after that.</p></div>
     <div class="sheet pad">
       <div>
         <h2><i>i.</i>Your selections</h2>
@@ -328,7 +215,7 @@ function renderOrder() {
           <div class="fl full"><label for="f-notes">Colours, theme &amp; notes for B. <small>(optional)</small></label><textarea id="f-notes" data-f="notes" placeholder="Pink and purple Hello Kitty theme, or 3 blue-and-white marble, 3 plain white…">${esc(od.notes)}</textarea></div>
           ${fl('lettering', 'Names or lettering <small>(optional)</small>', 'text', 'placeholder="Happy 30th, Britany"', true)}
         </div>
-        <p class="handoff"><b>Your name, phone and email go on B.'s order form</b>, which opens next with your treats filled in. That way everything reaches B. in one place.</p>
+        <p class="handoff"><b>Your name, phone, email${od.method === 'Delivery' ? ', delivery address' : ''} and card go on Square's checkout page</b>, never on this site. Square passes them to B. with your order.</p>
       </div>
       <aside class="ledger" id="ledger">${ledgerHTML()}</aside>
     </div>`;
@@ -357,11 +244,10 @@ function refreshOrderBits() {
 function updRush() {
   const el = $('#rushnote'); if (!el) return;
   const d = daysUntil(od.date);
-  el.innerHTML = d != null && d >= 1 && d <= 2 ? `<p class="note warn">⚡ That's within 48 hours, so it's a rush order: +$10, and only if there's room. B. will confirm.</p>` : '';
+  el.innerHTML = isRush(d) ? `<p class="note warn">⚡ That's within 48 hours, so it's a rush order: +$10, and only if there's room. Rush orders can't be paid online, so message B. on Instagram first.</p>` : '';
 }
 
 /* ---------- hand-off to B.'s Google Form ---------- */
-function lineText(l) { return `${l.qty} × ${byId[l.pid].name} (${desc(l)}): ${money(l.unit * l.qty)}`; }
 function estimateText(T) {
   const extras = [T.rush && `rush fee ${money(T.rush)}`, T.delLabel && `delivery ${T.delLabel}`].filter(Boolean);
   return `Estimated total ${money(T.total)}${extras.length ? ` (includes ${extras.join(', ')})` : ''} · deposit ${money(T.dep)}`;
@@ -429,7 +315,10 @@ function copyText(text) {
   ta.remove();
   if (!ok && navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
 }
-function send() {
+function showError(msg, fallback) {
+  $('#errmsg').innerHTML = `<p class="errmsg" role="alert">${esc(msg)}${fallback ? ` <button class="linkbtn" data-formfallback>Send it to B.'s order form instead →</button>` : ''}</p>`;
+}
+function checkOrder() {
   $$('.fl .err').forEach(x => x.classList.remove('err'));
   const d = daysUntil(od.date);
   let msg = '', bad = '';
@@ -438,16 +327,103 @@ function send() {
   else if (d < 1) { msg = 'Please pick a date from tomorrow on. For same-day treats, message B. on Instagram.'; bad = 'date'; }
   else if (!od.agree) msg = 'Please tick the deposit box to continue.';
   if (msg) {
-    $('#errmsg').innerHTML = `<p class="errmsg" role="alert">${msg}</p>`;
+    showError(msg);
     if (bad) { $('#f-' + bad).classList.add('err'); $('#f-' + bad).focus(); }
-    return;
   }
+  return !msg;
+}
+// Fallback when online payment isn't available: B.'s Google order form, with the treats filled in.
+function send() {
+  if (!checkOrder()) return;
   const T = totals(), url = prefillUrl(T);
   copyText(summaryText(T));
   const win = window.open(url, '_blank');
   if (win) win.opener = null;
   od.sent = { url, opened: !!win, date: niceDate(od.date), method: od.method, dep: T.dep, bal: T.bal };
   renderOrder(); window.scrollTo(0, 0);
+}
+
+/* ---------- paying the deposit on Square ---------- */
+// The browser sends only the menu choices and the date. The checkout function works the price out
+// again from menu.js and replies with a link to Square's hosted checkout, where the customer enters
+// their name, contact details and card. Nothing personal is sent to or kept by this site.
+const PENDING = 'luxurybites-pending-v1', THANKS = 'luxurybites-thanks-v1';
+const ORDER_NO = /^LB-[A-Z2-9]{6}$/;
+const SQUARE_PAGE = /^(sandbox\.)?(square\.link|checkout\.square\.site)$/;
+let paying = false, paid = null;
+function squareUrl(u) {
+  try {
+    const url = new URL(u);
+    // tools/dev_server.py stands in for Square on this computer while testing
+    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && url.origin === location.origin;
+    return (url.protocol === 'https:' && SQUARE_PAGE.test(url.hostname)) || local ? url.href : null;
+  } catch (_) { return null; }
+}
+async function pay() {
+  if (paying || !checkOrder()) return;
+  const T = totals();
+  paying = true; refreshOrderBits();
+  let res = null, data = {};
+  try {
+    res = await fetch('/api/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: sheet.map(({ pid, size, choc, flavor, topping, color, glitter, touches, qty }) => ({ pid, size, choc, flavor, topping, color, glitter, touches, qty })),
+        details: { date: od.date, time: od.time, method: od.method, distance: od.distance, occasion: od.occasion, notes: od.notes, lettering: od.lettering },
+        agree: od.agree, expected: T.dep,
+      }),
+    });
+    data = await res.json();
+  } catch (_) { /* shown below */ }
+  const url = squareUrl(data.url);
+  if (res && res.ok && url && ORDER_NO.test(data.order)) {
+    try { localStorage.setItem(PENDING, JSON.stringify({ order: data.order, bal: data.balance, method: od.method, extra: T.delExtra })); } catch (_) { /* ignore */ }
+    return location.assign(url);
+  }
+  paying = false; refreshOrderBits();
+  const down = !res || res.status >= 500;
+  showError(down ? (data.error || 'We couldn’t reach Square just now. Please try again in a minute.') : (data.error || 'Something went wrong. Please try again.'), down);
+}
+// Coming back from Square with the browser's Back button: let the customer try again.
+addEventListener('pageshow', e => { if (e.persisted && paying) { paying = false; refreshOrderBits(); } });
+
+// Square sends customers back to /?order=LB-XXXXXX once they've paid. If it's the order this browser
+// just sent, the sheet is cleared. The order number is kept for this tab so a refresh still shows it.
+function readPaid() {
+  const no = new URLSearchParams(location.search).get('order');
+  if (ORDER_NO.test(no || '')) {
+    let pend = null;
+    try { pend = JSON.parse(localStorage.getItem(PENDING) || 'null'); } catch (_) { /* ignore */ }
+    const mine = pend && pend.order === no;
+    paid = { order: no, bal: mine && typeof pend.bal === 'number' ? pend.bal : null, method: mine ? pend.method : '', extra: mine ? pend.extra : '' };
+    if (mine) {
+      sheet = []; od = { ...od, occasion: '', notes: '', lettering: '', date: '', time: '' }; save();
+      try { localStorage.removeItem(PENDING); } catch (_) { /* ignore */ }
+    }
+    try { sessionStorage.setItem(THANKS, JSON.stringify(paid)); } catch (_) { /* ignore */ }
+    history.replaceState(null, '', location.pathname + '#/thanks');
+    return;
+  }
+  try {
+    const s = JSON.parse(sessionStorage.getItem(THANKS) || 'null');
+    if (s && ORDER_NO.test(s.order)) paid = { order: s.order, bal: typeof s.bal === 'number' ? s.bal : null, method: s.method, extra: s.extra };
+  } catch (_) { /* ignore */ }
+}
+function renderThanks() {
+  const where = paid.method === 'Delivery' ? 'delivery' : paid.method === 'Pickup' ? 'pickup' : 'pickup or delivery';
+  $('#thanksPage').innerHTML = `<div class="thanks pad">
+    <p class="kicker"><span class="a">⚜</span> Deposit paid</p>
+    <h1>Thank you, <em>Luxe Babe.</em></h1>
+    <p class="orderno">Order <b>${esc(paid.order)}</b></p>
+    <p class="deck">Your 50% deposit is in. Keep your order number handy in case you need to reach B.</p>
+    <div class="how">
+      <div><b>1</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your deposit is refunded in full.</p></div>
+      <div><b>2</b><h3>Receipt by email.</h3><p>Square emails you a receipt for your deposit.</p></div>
+      <div><b>3</b><h3>Pay the balance.</h3><p>Pay the remaining ${paid.bal != null ? money(paid.bal) + ' ' : ''}at ${where}${paid.extra === 'quoted' ? ', plus the quoted delivery fee' : paid.extra === 'more' ? ', plus any delivery fee over $15' : ''}.</p></div>
+      <div><b>4</b><h3>Enjoy.</h3><p>So rich. So smooth. Elegantly sweet.</p></div>
+    </div>
+    <div class="ctas" style="margin-top:48px"><a class="cta" href="#/treats">Back to the treats →</a><a class="cta" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Questions? Message B. ↗</a></div>
+  </div>`;
 }
 
 /* ---------- shared ---------- */
@@ -461,12 +437,13 @@ function renderAll() {
 }
 function route() {
   let r = location.hash.replace(/^#\/?/, '') || 'home';
-  if (!$(`[data-page="${r}"]`)) r = 'home';
+  if (!$(`[data-page="${r}"]`) || (r === 'thanks' && !paid)) r = 'home';
   $$('[data-page]').forEach(s => s.hidden = s.dataset.page !== r);
   $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.r === r));
   document.body.classList.toggle('onorder', r === 'order');
   $('#overlay').hidden = true;
   if (r === 'order') renderOrder();
+  if (r === 'thanks') renderThanks();
   if (r === 'treats') fitSelects();
   window.scrollTo(0, 0);
 }
@@ -507,7 +484,9 @@ document.addEventListener('click', e => {
   }
   if (c('[data-rm]')) { sheet = sheet.filter(x => x.key != c('[data-rm]').dataset.rm); save(); return renderAll(); }
   if (c('[data-method]')) { od.method = c('[data-method]').dataset.method; save(); return renderOrder(); }
-  if (c('#send')) return send();
+  if (c('#pay')) return pay();
+  if (c('[data-formfallback]')) return send();
+  if (c('#rushdm')) return copyText(summaryText(totals()));
   if (c('[data-unsend]')) { od.sent = null; return renderOrder(); }
   if (c('[data-clear]')) { sheet = []; od = { ...od, occasion: '', notes: '', lettering: '', date: '', time: '', sent: null }; save(); renderAll(); location.hash = '#/treats'; return; }
   if (c('[data-jump]')) return $('#' + c('[data-jump]').dataset.jump).scrollIntoView({ behavior: 'smooth' });
@@ -560,6 +539,7 @@ $$('[data-partyform]').forEach(a => {
 });
 $$('[data-form-link]').forEach(a => { a.href = FORM.shortUrl; });
 
+readPaid();
 if (od.date && daysUntil(od.date) < 1) od.date = '';
 renderAll();
 route();

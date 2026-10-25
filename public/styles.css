@@ -542,3 +542,14 @@ body{background:#fff}
 .sentence select{background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237db3e4'/%3E%3C/svg%3E") no-repeat right 3px center}
 .ordlink{border-color:#7db3e4}
 .ordlink b{background:#fff;color:var(--ink)}
+
+/* ---------- V5: paying the deposit on Square ---------- */
+.send{display:flex;align-items:center;justify-content:center;text-align:center}
+.send[disabled]{background:var(--mocha);cursor:wait}
+.ledger .paynote{margin-top:12px}
+.rushpay{margin-top:20px;padding:14px 16px;background:var(--paper2);border-left:3px solid var(--ink);font-size:14px;color:var(--body)}
+.rushpay b{color:var(--ink)}
+.rushpay .send{margin-top:14px}
+.errmsg .linkbtn{display:inline;margin-left:4px;color:var(--ink);letter-spacing:.1em}
+.thanks .orderno{font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.thanks .orderno b{display:inline-block;margin-left:8px;padding:6px 12px;border:2px solid var(--ink);color:var(--ink);letter-spacing:.14em}
