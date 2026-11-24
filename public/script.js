@@ -26,7 +26,9 @@ const pad = n => String(n).padStart(2, '0');
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = new Date(); today.setHours(0, 0, 0, 0);
 const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-const photo = (name, alt = '') => `<img src="images/${name}.jpg" alt="${esc(alt)}" loading="lazy">`;
+// ?v= changes with each version (with the ones in index.html) so browsers never show an old photo.
+const ASSET_V = '12';
+const photo = (name, alt = '') => `<img src="images/${name}.jpg?v=${ASSET_V}" alt="${esc(alt)}" loading="lazy">`;
 // A missing photo is removed so the colour placeholder shows (done here, not inline, so the strict security policy allows it).
 document.addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.remove(); }, true);
 
@@ -93,7 +95,7 @@ function sentence(p, b) {
 function styleHTML(p, b) {
   if (!p.color) return '';
   return `<div class="style"><span class="t" id="st-${p.id}">Style</span>
-    <div class="toggle" role="radiogroup" aria-labelledby="st-${p.id}">${COLORS.map((c, i) => `<button data-style="${i}" data-p="${p.id}" role="radio" aria-checked="${b.color === i}" class="${b.color === i ? 'on' : ''}">${cap(c)}</button>`).join('')}</div>
+    <div class="toggle" role="radiogroup" aria-labelledby="st-${p.id}">${COLORS.map((c, i) => `<button data-style="${i}" data-p="${p.id}" role="radio" aria-checked="${b.color === i}" class="${b.color === i ? 'on' : ''}">${cap(c)}${i === 1 && p.customExtra ? ` <small>+$${p.customExtra}</small>` : ''}</button>`).join('')}</div>
     ${b.color === 1 ? `<p class="note">Tell B. your colours and theme in the notes on your order sheet.</p>` : ''}</div>`;
 }
 function touchesHTML(p, b) {
@@ -103,18 +105,28 @@ function touchesHTML(p, b) {
 }
 // Treats with more than one photo (V10): a large photo plus thumbnails that switch it.
 const GALLERY = {
+  straw: [
+    ['straw', 'White chocolate strawberries with a white drizzle and red “I ♥ U” letters'],
+    ['straw-milk', 'Milk chocolate strawberries with a white chocolate drizzle'],
+  ],
   apple: [
     ['apple', 'Candy apples in different flavours on clear stands'],
     ['apple-yellow', 'A glossy yellow candy apple'],
     ['apple-purple', 'A glossy purple candy apple'],
     ['apple-sugar', 'A sugar-coated candy apple'],
+    // V12 videos: videos/<name>.mp4 (silent, location data removed), poster images/<name>.jpg
+    ['apple-orange', 'Video: a glossy orange marbled candy apple', 'video'],
+    ['apple-lavender', 'Video: a lavender sugared candy apple with a chocolate-chip bottom', 'video'],
   ],
 };
 const shown = {}; // which gallery photo is showing, per treat
+// A video only loads when someone picks it, and then plays silently on a loop with controls.
+const videoHTML = (file, alt) => `<video src="videos/${file}.mp4?v=${ASSET_V}" poster="images/${file}.jpg?v=${ASSET_V}" aria-label="${esc(alt)}" controls muted loop playsinline autoplay preload="none"></video>`;
 function figureHTML(p) {
   const g = GALLERY[p.id], i = shown[p.id] || 0;
-  return `<figure><div class="ph ${p.tone}" data-label="Photo">${g ? photo(g[i][0], g[i][1]) : photo(p.photo || p.id, p.name)}</div>
-    ${g ? `<div class="thumbs" role="group" aria-label="More ${p.name.toLowerCase()} photos">${g.map(([file, alt], k) => `<button data-thumb="${k}" data-p="${p.id}" aria-pressed="${k === i}" aria-label="Show photo ${k + 1}: ${esc(alt)}"><img src="images/${file}.jpg" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+  const main = !g ? photo(p.photo || p.id, p.name) : g[i][2] === 'video' ? videoHTML(g[i][0], g[i][1]) : photo(g[i][0], g[i][1]);
+  return `<figure><div class="ph ${p.tone}" data-label="Photo">${main}</div>
+    ${g ? `<div class="thumbs" role="group" aria-label="More ${p.name.toLowerCase()} photos and videos"${g.length > 4 ? ` style="grid-template-columns:repeat(${g.length},1fr)"` : ''}>${g.map(([file, alt, kind], k) => `<button data-thumb="${k}" data-p="${p.id}" class="${kind === 'video' ? 'vid' : ''}" aria-pressed="${k === i}" aria-label="Show ${kind === 'video' ? 'video' : 'photo'} ${k + 1}: ${esc(alt)}"><img src="images/${file}.jpg?v=${ASSET_V}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
     <figcaption class="cap">Fig. ${PRODUCTS.indexOf(p) + 2}: ${p.name}.</figcaption></figure>`;
 }
 function treatHTML(p) {
