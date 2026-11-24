@@ -553,3 +553,9 @@ body{background:#fff}
 .errmsg .linkbtn{display:inline;margin-left:4px;color:var(--ink);letter-spacing:.1em}
 .thanks .orderno{font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .thanks .orderno b{display:inline-block;margin-left:8px;padding:6px 12px;border:2px solid var(--ink);color:var(--ink);letter-spacing:.14em}
+
+/* ---------- V7: contact details on the order sheet (invoice sent by Square) ---------- */
+.fields.two{grid-template-columns:1fr 1fr;gap:0 24px}
+.fields + h2{margin-top:60px}
+.thanks .big + .fine{margin-top:10px}
+@media (max-width:900px){.fields.two{grid-template-columns:1fr 1fr}}
