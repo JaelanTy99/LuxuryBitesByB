@@ -19,7 +19,7 @@ const FORM = {
   },
 };
 const { GLITTER, TOPPINGS, COLORS, TOUCHES, OCCASIONS, DISTANCES, PRODUCTS,
-  byId, money, unitOf, cleanLine, isRush, quote, niceDate, niceTime, desc, lineText } = LuxuryMenu;
+  byId, money, cap, unitOf, cleanLine, isRush, quote, niceDate, niceTime, desc, lineText } = LuxuryMenu;
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pad = n => String(n).padStart(2, '0');
@@ -46,7 +46,8 @@ const STORE = 'luxurybites-sheet-v1';
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved && Array.isArray(saved.sheet)) {
-    sheet = saved.sheet.map(cleanLine).filter(Boolean);
+    const old = saved.v !== 2; // saved before V9 (8 colour themes)
+    sheet = saved.sheet.map(l => old && l && Number.isInteger(l.color) && l.color > 0 ? { ...l, color: 1 } : l).map(cleanLine).filter(Boolean);
     seq = Math.max(sheet.length, ...sheet.map(l => l.key), Number.isInteger(saved.seq) ? saved.seq : 0);
     const so = saved.od || {}, str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
     Object.assign(od, {
@@ -57,7 +58,7 @@ try {
   }
 } catch (_) { /* storage unavailable: start fresh */ }
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify({ sheet, seq, od: { ...od, agree: false, sent: null } })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ v: 2, sheet, seq, od: { ...od, agree: false, sent: null } })); } catch (_) { /* ignore */ }
 }
 
 /* ---------- prices (the rules live in menu.js) ---------- */
@@ -83,12 +84,17 @@ function sentence(p, b) {
   if (p.choc) s += `, dipped in ${sel('choc', p.choc, 'Chocolate', c => c[2] ? `${c[0]} (+$${c[2]})` : c[0])} chocolate`;
   if (p.flavors) s += `, in ${sel('flavor', p.flavors, 'Flavour', f => f[0])}${p.each ? ' flavour' : ''}`;
   if (p.toppingSize != null && b.size === p.toppingSize) s += `, rolled in ${sel('topping', TOPPINGS, 'Candy topping', t => t[0])}`;
-  if (p.color) s += `, styled in ${sel('color', COLORS, 'Colour theme')}`;
   if (p.glitter) {
     const counts = Array.from({ length: 13 }, (_, i) => i);
     s += `, with ${sel('glitter', counts, 'Glitter berries', n => n === 0 ? 'no glitter berries' : `${n} glitter berr${n > 1 ? 'ies' : 'y'} (+$${n * GLITTER.price})`)}`;
   }
   return s + '.';
+}
+function styleHTML(p, b) {
+  if (!p.color) return '';
+  return `<div class="style"><span class="t" id="st-${p.id}">Style</span>
+    <div class="toggle" role="radiogroup" aria-labelledby="st-${p.id}">${COLORS.map((c, i) => `<button data-style="${i}" data-p="${p.id}" role="radio" aria-checked="${b.color === i}" class="${b.color === i ? 'on' : ''}">${cap(c)}</button>`).join('')}</div>
+    ${b.color === 1 ? `<p class="note">Tell B. your colours and theme in the notes on your order sheet.</p>` : ''}</div>`;
 }
 function touchesHTML(p, b) {
   if (!p.touches) return '';
@@ -104,6 +110,7 @@ function treatHTML(p) {
       <h2>${p.name}</h2><p class="blurb">${p.blurb}</p>
       <div class="prices">${p.sizes.map(s => `<div><span>${s[0]}</span><span>$${s[1]}${p.each ? '<span class="ea">each</span>' : ''}</span></div>`).join('')}</div>
       <p class="sentence">${sentence(p, b)}</p>
+      ${styleHTML(p, b)}
       ${touchesHTML(p, b)}
       <div class="addrow">
         <div class="qty"><button data-bq="-1" data-p="${p.id}" aria-label="One less">−</button><span>${b.qty}</span><button data-bq="1" data-p="${p.id}" aria-label="One more">+</button></div>
@@ -240,7 +247,7 @@ function renderOrder() {
           <div class="fl full"><span class="t">Getting it</span><div class="toggle">${['Pickup', 'Delivery'].map(v => `<button data-method="${v}" class="${od.method === v ? 'on' : ''}" aria-pressed="${od.method === v}">${v}</button>`).join('')}</div>
             ${methodNote()}</div>
           <div class="fl full"><label for="f-occasion">Occasion <small>(optional)</small></label><select id="f-occasion" data-f="occasion"><option value="">Choose one</option>${OCCASIONS.map(o => `<option ${o === od.occasion ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
-          <div class="fl full"><label for="f-notes">Colours, theme &amp; notes for B. <small>(optional)</small></label><textarea id="f-notes" data-f="notes" placeholder="Pink and purple Hello Kitty theme, or 3 blue-and-white marble, 3 plain white…">${esc(od.notes)}</textarea></div>
+          <div class="fl full"><label for="f-notes">Colours, theme &amp; notes for B. <small>${sheet.some(l => l.color === 1) ? '(describe your custom theme here)' : '(optional)'}</small></label><textarea id="f-notes" data-f="notes" placeholder="Pink and purple Hello Kitty theme, or 3 blue-and-white marble, 3 plain white…">${esc(od.notes)}</textarea></div>
           ${fl('lettering', 'Names or lettering <small>(optional)</small>', 'text', 'placeholder="Happy 30th, Britany"', true)}
         </div>
         <h2><i>iii.</i>Your details</h2>
@@ -532,6 +539,12 @@ document.addEventListener('click', e => {
     const btn = c('[data-bq]'), p = byId[btn.dataset.p], s = build[p.id];
     s.qty = Math.max(1, Math.min(p.max || 20, s.qty + +btn.dataset.bq)); btn.parentElement.querySelector('span').textContent = s.qty;
     return $('#lp-' + p.id).textContent = money(unitOf(p, s) * s.qty);
+  }
+  if (c('[data-style]')) {
+    const btn = c('[data-style]'), p = byId[btn.dataset.p];
+    build[p.id].color = +btn.dataset.style === 1 ? 1 : 0;
+    rerenderTreat(p.id);
+    return document.querySelector(`#t-${p.id} [data-style="${build[p.id].color}"]`)?.focus();
   }
   if (c('[data-touch]')) {
     const btn = c('[data-touch]'), p = byId[btn.dataset.p], s = build[p.id], id = btn.dataset.touch;

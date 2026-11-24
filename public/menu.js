@@ -15,7 +15,8 @@ globalThis.LuxuryMenu = (() => {
   const BERRY_CHOC = [...CHOC, ['white & milk', 'White / Milk ($+5)', 5], ['milk & dark', 'Milk/Dark Mix ($+5)', 5], ['white & dark', 'White/Dark ($+5)', 5]];
   const APPLE_FLAVORS = ['Blue Raspberry', 'Watermelon', 'Fruit Punch', 'Mango', 'Pineapple', 'Lemon', 'Peach', 'Grape', 'Cherry', 'Cotton Candy'].map(f => [f.toLowerCase(), f]);
   const TOPPINGS = ['Jolly Rancher', 'Starburst', 'Nerds', 'Cotton Candy'].map(t => [t, t]);
-  const COLORS = ['classic white & gold', 'blush pink & gold', 'sunshine yellow', 'emerald green', "robin's egg blue", 'lavender', 'ruby red', 'a custom theme (describe in notes)'];
+  // Style (V9): customers say what they want in the notes, so just two choices.
+  const COLORS = ['classic drizzle', 'custom themed'];
   const TOUCHES = [
     { id: 'topper', label: 'Birthday or holiday topper', price: 1, berry: 'Happy Birthday/Holiday Topper + ($1)', treat: 'Happy Birthday/Holiday Topper + ($1)' },
     { id: 'letters', label: 'Chocolate letters & molds', price: 5, berry: 'Chocolate Letters and molds + ($5)', treat: 'Chocolate Letters and molds + ($5)' },
