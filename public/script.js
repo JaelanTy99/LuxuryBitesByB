@@ -34,6 +34,10 @@ const freshBuild = p => ({ size: p.def || 0, choc: 0, flavor: 0, topping: 0, col
 let sheet = [], seq = 0, cat = 'all';
 const build = Object.fromEntries(PRODUCTS.map(p => [p.id, freshBuild(p)]));
 let od = { date: '', time: '', method: 'Pickup', distance: 'near', occasion: '', notes: '', lettering: '', agree: false, sent: null };
+// The customer's contact details. Kept only in memory on this page (never saved in the browser) and sent
+// once, with the order, so Square can create the invoice. The site itself stores none of it.
+const NO_ONE = { name: '', email: '', phone: '', line1: '', line2: '', city: '', state: 'NC', zip: '' };
+let who = { ...NO_ONE };
 
 /* ---------- saving the sheet between visits ---------- */
 // Anything read back from the browser is untrusted: cleanLine (menu.js) keeps only known menu choices
@@ -160,6 +164,22 @@ function addToSheet(pid) {
 function fl(id, label, type = 'text', extra = '', full = false) {
   return `<div class="fl ${full ? 'full' : ''}"><label for="f-${id}">${label}</label><input type="${type}" id="f-${id}" data-f="${id}" value="${esc(od[id])}" ${extra}></div>`;
 }
+function cf(id, label, type = 'text', extra = '', full = false) {
+  return `<div class="fl ${full ? 'full' : ''}"><label for="c-${id}">${label}</label><input type="${type}" id="c-${id}" data-c="${id}" value="${esc(who[id])}" ${extra}></div>`;
+}
+function whoHTML() {
+  return `<div class="fields">
+    ${cf('name', 'Your name', 'text', 'autocomplete="name" maxlength="100"', true)}
+    ${cf('email', 'Email <small>(your invoice is sent here)</small>', 'email', 'autocomplete="email" inputmode="email" maxlength="254"')}
+    ${cf('phone', 'Phone', 'tel', 'autocomplete="tel" inputmode="tel" maxlength="20"')}
+    ${od.method === 'Delivery' ? `
+    ${cf('line1', 'Delivery address', 'text', 'autocomplete="address-line1" maxlength="100"', true)}
+    ${cf('line2', 'Apt, suite <small>(optional)</small>', 'text', 'autocomplete="address-line2" maxlength="100"', true)}
+    ${cf('city', 'City', 'text', 'autocomplete="address-level2" maxlength="60"')}
+    <div class="fields two">${cf('state', 'State', 'text', 'autocomplete="address-level1" maxlength="2"')}${cf('zip', 'ZIP', 'text', 'autocomplete="postal-code" inputmode="numeric" maxlength="10"')}</div>` : ''}
+  </div>
+  <p class="handoff"><b>Your details go straight to Square</b>, B.'s payment provider, to create your invoice. This site doesn't keep them, and your card is only ever entered on Square's secure invoice page.</p>`;
+}
 const ROMAN = ['i.', 'ii.', 'iii.', 'iv.', 'v.', 'vi.', 'vii.', 'viii.', 'ix.', 'x.', 'xi.', 'xii.'];
 function selHTML() {
   if (!sheet.length) return `<p class="empty">Nothing on your sheet yet. <a href="#/treats">Browse the treats →</a></p>`;
@@ -175,7 +195,7 @@ function ledgerHTML() {
     ${T.rush ? `<div class="ln"><span>Rush fee (within 48 hrs)</span><span>$10</span></div>` : ''}
     ${T.delLabel ? `<div class="ln"><span>Delivery</span><span>${T.delLabel}</span></div>` : ''}
     <div class="ln tot"><span>Order total</span><span>${money(T.total)}</span></div>
-    <div class="ln dep"><span>${isRush(T.days) ? 'Deposit (50%)' : 'Deposit due today (50%)'}</span><span>${money(T.dep)}</span></div>
+    <div class="ln dep"><span>${isRush(T.days) ? 'Deposit (50%)' : 'Deposit (50%), due in 48 hrs'}</span><span>${money(T.dep)}</span></div>
     <div class="ln"><span>Due at ${where}</span><span>${money(T.bal)}</span></div>
     ${T.delExtra === 'quoted' ? `<p class="fine">B. quotes the delivery fee, and it's added to what you pay at delivery.</p>` : ''}
     ${T.delExtra === 'more' ? `<p class="fine">Delivery is $15 and up. Anything over $15 is added to what you pay at delivery.</p>` : ''}
@@ -186,20 +206,20 @@ function ledgerHTML() {
     <div id="errmsg"></div>` : `
     <label class="agree"><input type="checkbox" id="agree" ${od.agree ? 'checked' : ''}><span>I understand the 50% deposit is non-refundable if I cancel, refunded in full if B. can't take my date, and the balance is due at ${where}.</span></label>
     <div id="errmsg"></div>
-    <button class="send" id="pay" ${paying ? 'disabled' : ''}>${paying ? 'Opening Square…' : `Pay 50% deposit · ${money(T.dep)}`}</button>
-    <p class="fine paynote">You'll pay on Square's secure checkout. Your card details never touch this site. B. then confirms your date.</p>`}`;
+    <button class="send" id="pay" ${paying ? 'disabled' : ''}>${paying ? 'Sending your invoice…' : 'Send my order'}</button>
+    <p class="fine paynote">Square emails your invoice right away. Pay the ${money(T.dep)} deposit within 48 hours to hold your date, then B. confirms your order.</p>`}`;
 }
 function methodNote() {
   if (od.method === 'Pickup') return `<p class="note">Pickup is in North Charlotte (28262). <span class="tbd">The exact address and instructions come when B. confirms your order.</span></p>`;
   return `<div class="fl" style="margin-top:22px"><label for="f-distance">How far from North Charlotte?</label><select id="f-distance" data-f="distance">${DISTANCES.map(([v, t]) => `<option value="${v}" ${v === od.distance ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-    <p class="note">Free on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, Raleigh or long distance is $50. You'll add the address on Square's checkout page.</p>`;
+    <p class="note">Free on orders of $100+ within 5–10 miles. 10–15 miles is $10, 15+ miles is $15 and up, Raleigh or long distance is $50. Add the delivery address under your details.</p>`;
 }
 function renderOrder() {
   const el = $('#orderPage');
   if (od.sent) return renderSent(el);
   el.innerHTML = `
     <div class="phead pad"><p class="kicker"><span class="a">05</span> · Order</p><h1>The Order <em>Sheet</em></h1>
-      <p class="deck">Review your selections and tell us when, then pay the 50% deposit on Square's secure checkout. B. confirms your date after that.</p></div>
+      <p class="deck">Review your selections, tell us when and how to reach you, and send your order. Square emails your invoice right away: the 50% deposit holds your date.</p></div>
     <div class="sheet pad">
       <div>
         <h2><i>i.</i>Your selections</h2>
@@ -215,7 +235,8 @@ function renderOrder() {
           <div class="fl full"><label for="f-notes">Colours, theme &amp; notes for B. <small>(optional)</small></label><textarea id="f-notes" data-f="notes" placeholder="Pink and purple Hello Kitty theme, or 3 blue-and-white marble, 3 plain white…">${esc(od.notes)}</textarea></div>
           ${fl('lettering', 'Names or lettering <small>(optional)</small>', 'text', 'placeholder="Happy 30th, Britany"', true)}
         </div>
-        <p class="handoff"><b>Your name, phone, email${od.method === 'Delivery' ? ', delivery address' : ''} and card go on Square's checkout page</b>, never on this site. Square passes them to B. with your order.</p>
+        <h2><i>iii.</i>Your details</h2>
+        ${whoHTML()}
       </div>
       <aside class="ledger" id="ledger">${ledgerHTML()}</aside>
     </div>`;
@@ -318,19 +339,35 @@ function copyText(text) {
 function showError(msg, fallback) {
   $('#errmsg').innerHTML = `<p class="errmsg" role="alert">${esc(msg)}${fallback ? ` <button class="linkbtn" data-formfallback>Send it to B.'s order form instead →</button>` : ''}</p>`;
 }
-function checkOrder() {
+function checkOrder(contact = false) {
   $$('.fl .err').forEach(x => x.classList.remove('err'));
   const d = daysUntil(od.date);
   let msg = '', bad = '';
   if (!sheet.length) msg = 'Your sheet is empty. Add a treat first.';
   else if (!od.date) { msg = 'Please pick the date you need your treats.'; bad = 'date'; }
   else if (d < 1) { msg = 'Please pick a date from tomorrow on. For same-day treats, message B. on Instagram.'; bad = 'date'; }
-  else if (!od.agree) msg = 'Please tick the deposit box to continue.';
+  else if (contact) [msg, bad] = whoProblem();
+  if (!msg && !od.agree) msg = 'Please tick the deposit box to continue.';
   if (msg) {
     showError(msg);
-    if (bad) { $('#f-' + bad).classList.add('err'); $('#f-' + bad).focus(); }
+    const el = bad && ($('#f-' + bad) || $('#c-' + bad));
+    if (el) { el.classList.add('err'); el.focus(); }
   }
   return !msg;
+}
+// Same rules as the order function (which checks again). Returns [message, field] or ['', ''].
+function whoProblem() {
+  const t = k => who[k].trim(), phone = t('phone').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+  if (t('name').length < 2) return ['Please add your name.', 'name'];
+  if (!/^[^\s@<>()[\]",;:\\]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(t('email'))) return ['Please check your email address. Your invoice is sent there.', 'email'];
+  if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(phone)) return ['Please add a 10-digit phone number.', 'phone'];
+  if (od.method === 'Delivery') {
+    if (t('line1').length < 3) return ['Please add the delivery address.', 'line1'];
+    if (t('city').length < 2) return ['Please add the city.', 'city'];
+    if (!/^[a-z]{2}$/i.test(t('state'))) return ['Please use the 2-letter state, like NC.', 'state'];
+    if (!/^\d{5}(-\d{4})?$/.test(t('zip'))) return ['Please check the ZIP code.', 'zip'];
+  }
+  return ['', ''];
 }
 // Fallback when online payment isn't available: B.'s Google order form, with the treats filled in.
 function send() {
@@ -343,87 +380,104 @@ function send() {
   renderOrder(); window.scrollTo(0, 0);
 }
 
-/* ---------- paying the deposit on Square ---------- */
-// The browser sends only the menu choices and the date. The checkout function works the price out
-// again from menu.js and replies with a link to Square's hosted checkout, where the customer enters
-// their name, contact details and card. Nothing personal is sent to or kept by this site.
-const PENDING = 'luxurybites-pending-v1', THANKS = 'luxurybites-thanks-v1';
+/* ---------- sending the order: Square emails the invoice ---------- */
+// The browser sends the menu choices, the date and the customer's contact details. The order function
+// works the prices out again from menu.js, adds the customer in B.'s Square account and has Square email
+// an invoice: the 50% deposit (due within 48 hours, it holds the date) and the balance (due on the day).
+// The reply links to that invoice so the deposit can be paid straight away. Nothing personal is kept here.
+const THANKS = 'luxurybites-thanks-v2';
 const ORDER_NO = /^LB-[A-Z2-9]{6}$/;
-const SQUARE_PAGE = /^(sandbox\.)?(square\.link|checkout\.square\.site)$/;
+const INVOICE_PAGE = /^([a-z0-9-]+\.)*squareup(sandbox)?\.com$/;
 let paying = false, paid = null;
-function squareUrl(u) {
+function invoiceUrl(u) {
   try {
     const url = new URL(u);
     // tools/dev_server.py stands in for Square on this computer while testing
     const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && url.origin === location.origin;
-    return (url.protocol === 'https:' && SQUARE_PAGE.test(url.hostname)) || local ? url.href : null;
+    return (url.protocol === 'https:' && INVOICE_PAGE.test(url.hostname)) || local ? url.href : null;
   } catch (_) { return null; }
 }
 async function pay() {
-  if (paying || !checkOrder()) return;
+  if (paying || !checkOrder(true)) return;
   const T = totals();
   paying = true; refreshOrderBits();
   let res = null, data = {};
   try {
-    res = await fetch('/api/checkout', {
+    const w = Object.fromEntries(Object.entries(who).map(([k, v]) => [k, v.trim()]));
+    res = await fetch('/api/order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lines: sheet.map(({ pid, size, choc, flavor, topping, color, glitter, touches, qty }) => ({ pid, size, choc, flavor, topping, color, glitter, touches, qty })),
         details: { date: od.date, time: od.time, method: od.method, distance: od.distance, occasion: od.occasion, notes: od.notes, lettering: od.lettering },
+        contact: { name: w.name, email: w.email, phone: w.phone, ...(od.method === 'Delivery' && { address: { line1: w.line1, line2: w.line2, city: w.city, state: w.state, zip: w.zip } }) },
         agree: od.agree, expected: T.dep,
       }),
     });
     data = await res.json();
   } catch (_) { /* shown below */ }
-  const url = squareUrl(data.url);
-  if (res && res.ok && url && ORDER_NO.test(data.order)) {
-    try { localStorage.setItem(PENDING, JSON.stringify({ order: data.order, bal: data.balance, method: od.method, extra: T.delExtra })); } catch (_) { /* ignore */ }
-    return location.assign(url);
+  paying = false;
+  if (res && res.ok && ORDER_NO.test(data.order)) {
+    paid = { order: data.order, email: who.email.trim(), url: invoiceUrl(data.invoiceUrl), dep: data.deposit, bal: data.balance,
+      depDue: /^\d{4}-\d{2}-\d{2}$/.test(data.depositDue || '') ? data.depositDue : '', date: od.date, method: od.method, extra: T.delExtra };
+    // Kept for this tab only so a refresh still shows the order number; no contact details or invoice link.
+    try { sessionStorage.setItem(THANKS, JSON.stringify({ ...paid, email: '', url: '' })); } catch (_) { /* ignore */ }
+    sheet = []; who = { ...NO_ONE };
+    od = { ...od, occasion: '', notes: '', lettering: '', date: '', time: '', agree: false }; save();
+    renderAll(); location.hash = '#/thanks';
+    return;
   }
-  paying = false; refreshOrderBits();
+  refreshOrderBits();
   const down = !res || res.status >= 500;
   showError(down ? (data.error || 'We couldn’t reach Square just now. Please try again in a minute.') : (data.error || 'Something went wrong. Please try again.'), down);
+  const el = data.field && ($('#f-' + data.field) || $('#c-' + data.field));
+  if (el) el.classList.add('err');
 }
-// Coming back from Square with the browser's Back button: let the customer try again.
-addEventListener('pageshow', e => { if (e.persisted && paying) { paying = false; refreshOrderBits(); } });
 
-// Square sends customers back to /?order=LB-XXXXXX once they've paid. If it's the order this browser
-// just sent, the sheet is cleared. The order number is kept for this tab so a refresh still shows it.
+// Customers who started on the old pay-first checkout come back from Square to /?order=LB-XXXXXX.
 function readPaid() {
   const no = new URLSearchParams(location.search).get('order');
   if (ORDER_NO.test(no || '')) {
-    let pend = null;
-    try { pend = JSON.parse(localStorage.getItem(PENDING) || 'null'); } catch (_) { /* ignore */ }
-    const mine = pend && pend.order === no;
-    paid = { order: no, bal: mine && typeof pend.bal === 'number' ? pend.bal : null, method: mine ? pend.method : '', extra: mine ? pend.extra : '' };
-    if (mine) {
-      sheet = []; od = { ...od, occasion: '', notes: '', lettering: '', date: '', time: '' }; save();
-      try { localStorage.removeItem(PENDING); } catch (_) { /* ignore */ }
-    }
+    paid = { order: no, legacy: true };
     try { sessionStorage.setItem(THANKS, JSON.stringify(paid)); } catch (_) { /* ignore */ }
     history.replaceState(null, '', location.pathname + '#/thanks');
     return;
   }
   try {
     const s = JSON.parse(sessionStorage.getItem(THANKS) || 'null');
-    if (s && ORDER_NO.test(s.order)) paid = { order: s.order, bal: typeof s.bal === 'number' ? s.bal : null, method: s.method, extra: s.extra };
+    if (s && ORDER_NO.test(s.order)) paid = {
+      order: s.order, legacy: s.legacy === true, email: '', url: null,
+      dep: typeof s.dep === 'number' ? s.dep : null, bal: typeof s.bal === 'number' ? s.bal : null,
+      depDue: /^\d{4}-\d{2}-\d{2}$/.test(s.depDue || '') ? s.depDue : '', date: /^\d{4}-\d{2}-\d{2}$/.test(s.date || '') ? s.date : '',
+      method: s.method === 'Delivery' ? 'Delivery' : 'Pickup', extra: ['quoted', 'more'].includes(s.extra) ? s.extra : '' };
   } catch (_) { /* ignore */ }
 }
 function renderThanks() {
-  const where = paid.method === 'Delivery' ? 'delivery' : paid.method === 'Pickup' ? 'pickup' : 'pickup or delivery';
+  const P = paid, where = P.method === 'Delivery' ? 'delivery' : 'pickup';
+  const ctas = `<div class="ctas" style="margin-top:48px"><a class="cta" href="#/treats">Back to the treats →</a><a class="cta" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Questions? Message B. ↗</a></div>`;
+  if (P.legacy) {
+    $('#thanksPage').innerHTML = `<div class="thanks pad">
+      <p class="kicker"><span class="a">⚜</span> Deposit paid</p>
+      <h1>Thank you, <em>Luxe Babe.</em></h1>
+      <p class="orderno">Order <b>${esc(P.order)}</b></p>
+      <p class="deck">Your 50% deposit is in. B. checks your date and confirms your order. Keep your order number handy in case you need to reach B.</p>${ctas}</div>`;
+    return;
+  }
+  const dep = P.dep != null ? money(P.dep) + ' ' : '', bal = P.bal != null ? money(P.bal) + ' ' : '';
+  const by = P.depDue ? ` by ${niceDate(P.depDue)}` : ' within 48 hours';
   $('#thanksPage').innerHTML = `<div class="thanks pad">
-    <p class="kicker"><span class="a">⚜</span> Deposit paid</p>
+    <p class="kicker"><span class="a">⚜</span> Invoice sent</p>
     <h1>Thank you, <em>Luxe Babe.</em></h1>
-    <p class="orderno">Order <b>${esc(paid.order)}</b></p>
-    <p class="deck">Your 50% deposit is in. Keep your order number handy in case you need to reach B.</p>
+    <p class="orderno">Order <b>${esc(P.order)}</b></p>
+    <p class="deck">Square just emailed your invoice${P.email ? ` to <b>${esc(P.email)}</b>` : ''}. Pay the ${dep}deposit${by} to hold ${P.date ? niceDate(P.date) : 'your date'}.</p>
+    ${P.url ? `<a class="big" href="${esc(P.url)}" target="_blank" rel="noopener noreferrer">Pay the ${dep}deposit now ↗</a>
+    <p class="fine">Opens your invoice on Square's secure page. You can also use the Pay button in Square's email.</p>`
+      : `<p class="fine">Use the Pay button in Square's email. Can't see it? Check your spam or promotions folder.</p>`}
     <div class="how">
-      <div><b>1</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your deposit is refunded in full.</p></div>
-      <div><b>2</b><h3>Receipt and invoice by email.</h3><p>Square emails you a receipt for your deposit, then an invoice for the balance listing your treats.</p></div>
-      <div><b>3</b><h3>Pay the balance.</h3><p>Pay the remaining ${paid.bal != null ? money(paid.bal) + ' ' : ''}at ${where}${paid.extra === 'quoted' ? ', plus the quoted delivery fee' : paid.extra === 'more' ? ', plus any delivery fee over $15' : ''}, or pay the invoice online before then.</p></div>
+      <div><b>1</b><h3>Pay the deposit.</h3><p>The 50% deposit${by} holds your date. It's non-refundable if you cancel.</p></div>
+      <div><b>2</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your deposit is refunded in full.</p></div>
+      <div><b>3</b><h3>Pay the balance.</h3><p>The remaining ${bal}is on the same invoice, due at ${where}${P.extra === 'quoted' ? ', plus the quoted delivery fee' : P.extra === 'more' ? ', plus any delivery fee over $15' : ''}. Pay it online or at ${where}.</p></div>
       <div><b>4</b><h3>Enjoy.</h3><p>So rich. So smooth. Elegantly sweet.</p></div>
-    </div>
-    <div class="ctas" style="margin-top:48px"><a class="cta" href="#/treats">Back to the treats →</a><a class="cta" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Questions? Message B. ↗</a></div>
-  </div>`;
+    </div>${ctas}</div>`;
 }
 
 /* ---------- shared ---------- */
@@ -483,7 +537,7 @@ document.addEventListener('click', e => {
     save(); return renderAll();
   }
   if (c('[data-rm]')) { sheet = sheet.filter(x => x.key != c('[data-rm]').dataset.rm); save(); return renderAll(); }
-  if (c('[data-method]')) { od.method = c('[data-method]').dataset.method; save(); return renderOrder(); }
+  if (c('[data-method]')) { od.method = c('[data-method]').dataset.method; save(); return renderOrder(); } // contact details stay in `who`
   if (c('#pay')) return pay();
   if (c('[data-formfallback]')) return send();
   if (c('#rushdm')) return copyText(summaryText(totals()));
@@ -512,6 +566,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target;
+  if (t.dataset.c) { who[t.dataset.c] = t.value; t.classList.remove('err'); return; } // memory only, never saved
   if (t.dataset.f) {
     od[t.dataset.f] = t.value; t.classList.remove('err'); save();
     if (t.dataset.f === 'date') { updRush(); refreshOrderBits(); }
