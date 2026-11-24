@@ -100,7 +100,8 @@ await test('pickup order: new customer, every treat, invoice with 50% deposit (4
   ok(/^LB-[A-Z2-9]{6}$/.test(data.order), 'order number format');
   eq([ord.location_id, ord.reference_id, ord.customer_id], ['LOC123', data.order, 'NEWCUST1'], 'order basics');
   eq(ord.line_items.map(l => [l.name, l.quantity, l.base_price_money.amount]), [['Chocolate-Covered Strawberries', '2', 4100], ['Cake Pops', '1', 4500]], 'every treat at menu price');
-  ok(/Blush pink & gold/.test(ord.line_items[0].variation_name) && /Birthday or holiday topper/.test(ord.line_items[0].variation_name), 'choices on each line');
+  ok(/Custom themed/.test(ord.line_items[0].variation_name) && /Birthday or holiday topper/.test(ord.line_items[0].variation_name), 'choices on each line');
+  ok(/Classic drizzle/.test(ord.line_items[1].variation_name), 'classic drizzle on the cake pops');
 
   const inv = post('/v2/invoices').invoice;
   eq([inv.order_id, inv.primary_recipient.customer_id, inv.invoice_number, inv.delivery_method, inv.sale_or_service_date], ['ORDER1', 'NEWCUST1', data.order, 'EMAIL', sent.details.date], 'invoice basics');
@@ -361,6 +362,14 @@ await test('V8 pay in full with a quoted delivery fee still says the fee is adde
   eq([r.status, r.data.deposit, r.data.balance], [200, 45, 0], 'pays the $45 now');
   const d = post('/v2/invoices').invoice.description;
   ok(d.includes('except the delivery fee noted below') && d.includes('quoted by B.'), 'fee explained');
+});
+
+await test('V9 style: only "classic drizzle" or "custom themed"; an old page\'s colour number is dropped, not refused', async () => {
+  eq(M.COLORS, ['classic drizzle', 'custom themed'], 'two styles');
+  const r = await call(order({ lines: [{ ...LINES[0], color: 5 }, LINES[1]] }));
+  eq(r.status, 200, 'still accepted (style has no price)');
+  const v = post('/v2/orders').order.line_items[0].variation_name;
+  ok(!/themed|drizzle/i.test(v) && /Milk chocolate/.test(v), 'no style shown for an unknown colour');
 });
 
 const failed = results.filter(r => r[0] !== 'ok');
