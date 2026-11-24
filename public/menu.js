@@ -45,7 +45,8 @@ globalThis.LuxuryMenu = (() => {
       sizes: [['Dozen', 45, 'a dozen']], flavors: [['vanilla', 'Vanilla'], ['funfetti', 'Funfetti'], ['chocolate', 'Chocolate'], ['red velvet', 'Red velvet']], color: true, touches: true },
     { id: 'krisp', cat: 'dipped', group: 'treats', rn: 'iv.', tone: 'crisp', name: 'Rice Krispies', entry: 433442062,
       blurb: 'Crispy rice treats, dipped in chocolate and decorated.', note: 'Dipped and decorated',
-      sizes: [['Dozen', 40, 'a dozen']], choc: CHOC, color: true, touches: true },
+      // V12: $30 with the classic drizzle; a custom theme is an add-on (+$10), like the finishing touches.
+      sizes: [['Dozen', 30, 'a dozen']], choc: CHOC, color: true, customExtra: 10, touches: true },
     { id: 'oreo', cat: 'dipped', group: 'treats', rn: 'v.', tone: 'oreo', name: 'Chocolate-Covered Oreos', entry: 254092139,
       blurb: 'Oreo cookies dipped in chocolate and dressed to match.', note: 'In milk, dark or white chocolate',
       sizes: [['Dozen', 30, 'a dozen']], choc: CHOC, color: true, touches: true },
@@ -71,6 +72,7 @@ globalThis.LuxuryMenu = (() => {
     if (p.choc) n += p.choc[b.choc][2] || 0;
     if (p.touches) n += TOUCHES.filter(t => b.touches.includes(t.id)).reduce((s, t) => s + t.price, 0);
     if (p.glitter) n += b.glitter * GLITTER.price;
+    if (p.customExtra && b.color === 1) n += p.customExtra; // "custom themed" costs extra on some treats
     return n;
   }
 
@@ -94,7 +96,7 @@ globalThis.LuxuryMenu = (() => {
     };
     if ((p.choc && line.choc == null) || (p.flavors && line.flavor == null)) return null;
     line.touchKey = line.touches.join(',');
-    line.unit = unitOf(p, { size, choc: line.choc ?? 0, touches: line.touches, glitter: line.glitter });
+    line.unit = unitOf(p, { size, choc: line.choc ?? 0, touches: line.touches, glitter: line.glitter, color: line.color });
     return line;
   }
 

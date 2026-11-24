@@ -334,6 +334,19 @@ await test('Square refusing the email or phone tells the customer which one to c
   eq([r.status, r.data.field], [400, 'phone'], 'phone');
 });
 
+await test('V12 Rice Krispies: $30 a dozen with classic drizzle, custom themed +$10, finishing touches add on', async () => {
+  const unit = l => M.cleanLine({ pid: 'krisp', size: 0, choc: 0, touches: [], qty: 1, ...l }).unit;
+  eq([unit({ color: 0 }), unit({ color: 1 }), unit({ color: 0, touches: ['sprinkles', 'topper'] }), unit({ color: 1, touches: ['letters'] })], [30, 40, 33, 45], 'unit prices');
+  const lines = [{ pid: 'krisp', size: 0, choc: 0, color: 0, touches: [], qty: 2 }, { pid: 'krisp', size: 0, choc: 1, color: 1, touches: [], qty: 1 }];
+  const T = M.quote(lines.map(M.cleanLine), { date: day(7), method: 'Pickup' }, today());
+  eq(T.total, 100, '2 × $30 + 1 × $40');
+  const r = await call(order({ lines, expected: T.dep }));
+  eq(r.status, 200, 'accepted');
+  eq(post('/v2/orders').order.line_items.map(l => [l.quantity, l.base_price_money.amount]), [['2', 3000], ['1', 4000]], 'invoice prices');
+  calls = [];
+  eq((await call(order({ lines, expected: 60 }))).status, 409, 'old $40 price from a cached page is refused (refresh)');
+});
+
 await test('V8 pay in full: one invoice part for the whole total, due within 48 hours, nothing left for the day', async () => {
   const sent = order({ pay: 'full', expected: 127 });
   const { status, data } = await call(sent);
