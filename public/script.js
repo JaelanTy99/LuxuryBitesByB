@@ -360,6 +360,7 @@ function whoProblem() {
   const t = k => who[k].trim(), phone = t('phone').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
   if (t('name').length < 2) return ['Please add your name.', 'name'];
   if (!/^[^\s@<>()[\]",;:\\]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(t('email'))) return ['Please check your email address. Your invoice is sent there.', 'email'];
+  if (/\.(con|coom|comm|cmo|ocm|vom|xom|cpm|comn|cim|clm)$/i.test(t('email'))) return ['Please check the end of your email address. Did you mean .com?', 'email'];
   if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(phone)) return ['Please add a 10-digit phone number.', 'phone'];
   if (od.method === 'Delivery') {
     if (t('line1').length < 3) return ['Please add the delivery address.', 'line1'];

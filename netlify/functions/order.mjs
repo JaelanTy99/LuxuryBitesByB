@@ -25,6 +25,8 @@ const INVOICE_PAGE = /^([a-z0-9-]+\.)*squareup(sandbox)?\.com$/;
 const SITES = [/^https:\/\/(www\.)?luxurybitesbyb\.co$/, /^https:\/\/([a-z0-9-]+--)?luxurybitesbyb\.netlify\.app$/];
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 const MAX_BODY = 20000, MAX_LINES = 30, MAX_DAYS_AHEAD = 366;
+// Common slips when typing ".com" (none of these are real endings).
+const TYPO_TLD = /\.(con|coom|comm|cmo|ocm|vom|xom|cpm|comn|cim|clm)$/;
 const DEPOSIT_DAYS = 2;     // B.'s rule: deposit within 24–48 hours of the invoice
 const TIME_BUDGET = 7000;   // ms; Netlify stops a function after 10 s, so no retries past this
 
@@ -107,6 +109,7 @@ function readContact(c, method) {
   if (phone.length === 11 && phone[0] === '1') phone = phone.slice(1);
   if (name.length < 2) return bad('name', 'Please add your name.');
   if (!/^[^\s@<>()[\]",;:\\]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(email)) return bad('email', 'Please check your email address. Your invoice is sent there.');
+  if (TYPO_TLD.test(email)) return bad('email', 'Please check the end of your email address. Did you mean .com?');
   if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(phone)) return bad('phone', 'Please add a 10-digit phone number.');
   const contact = { name, email, phone: '+1' + phone, address: null };
   if (method === 'Delivery') {
@@ -143,7 +146,8 @@ function squareClient(mode, token, started = Date.now()) {
       if (res && (res.status < 500 || last)) {
         const data = await res.json().catch(() => ({}));
         if (res.ok) return data;
-        throw new Error(`${what}: ${res.status} ${(data.errors || []).map(e => e.code).join(',')}`);
+        const codes = (data.errors || []).map(e => e.code);
+        throw Object.assign(new Error(`${what}: ${res.status} ${codes.join(',')}`), { codes });
       }
       await new Promise(r => setTimeout(r, 300));
     }
@@ -230,7 +234,8 @@ export default async function handler(req) {
         order_id: sqOrder.id,
         primary_recipient: { customer_id: customerId },
         payment_requests: [
-          { request_type: 'DEPOSIT', due_date: depositDue, fixed_amount_requested_money: cents(T.dep), tipping_enabled: false },
+          // Square allows tipping_enabled only on the last request (the balance), so the deposit has none.
+          { request_type: 'DEPOSIT', due_date: depositDue, fixed_amount_requested_money: cents(T.dep) },
           { request_type: 'BALANCE', due_date: order.date, tipping_enabled: false },
         ],
         delivery_method: 'EMAIL',
@@ -253,6 +258,9 @@ export default async function handler(req) {
     return reply(200, { order: no, invoiceUrl, deposit: T.dep, balance: T.bal, depositDue });
   } catch (e) {
     console.error(`Order ${no} not sent:`, e.message);
+    const codes = e.codes || [];
+    if (codes.includes('INVALID_EMAIL_ADDRESS')) return fail(400, 'invalid', 'Square couldn’t use that email address. Please check it and try again.', 'email');
+    if (codes.includes('INVALID_PHONE_NUMBER')) return fail(400, 'invalid', 'Square couldn’t use that phone number. Please check it and try again.', 'phone');
     return fail(502, 'square', 'We couldn’t send your invoice just now. Please try again in a minute.');
   }
 }
