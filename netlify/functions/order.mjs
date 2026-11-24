@@ -1,7 +1,10 @@
 /* Luxury Bites by B. — takes an order from the order sheet and has Square email the customer an
    invoice straight away, the way B. already works: order → invoice → 50% deposit holds the date.
-   The invoice has two parts: the 50% deposit, due within 48 hours, and the balance, due on the
-   pickup or delivery date. B. sees every invoice (and who it's for) in the Square app.
+   The customer chooses how to pay (V8):
+     deposit  two parts: the 50% deposit, due within 48 hours, and the balance, due on the pickup or
+              delivery date;
+     full     one part: the whole order total, due within 48 hours.
+   B. sees every invoice (and who it's for) in the Square app.
 
    The browser sends the menu choices, the date and the customer's contact details. Prices are worked
    out again here from the shared menu (public/menu.js), never taken from the browser. Contact details
@@ -66,6 +69,7 @@ function readOrder(body) {
   const bad = (msg, field) => ({ error: fail(400, 'invalid', msg, field) });
   if (!body || typeof body !== 'object') return bad('We couldn’t read your order. Please refresh and try again.');
   const { lines: raw, details: d = {}, contact: c, agree, expected } = body;
+  const pay = body.pay === 'full' ? 'full' : 'deposit';
   if (!Array.isArray(raw) || !raw.length) return bad('Your order sheet is empty. Add a treat first.');
   if (raw.length > MAX_LINES) return bad('That’s a lot of treats! Please message B. on Instagram for big orders.');
   const lines = raw.map(cleanLine);
@@ -96,8 +100,8 @@ function readOrder(body) {
   if (error) return { error };
   if (agree !== true) return bad('Please tick the deposit box to continue.');
   // The invoice must match what the page showed the customer (an old cached page could differ).
-  if (expected !== T.dep) return { error: fail(409, 'changed', 'Prices on this page are out of date. Please refresh the page and try again.') };
-  return { order: { ...order, T }, contact };
+  if (expected !== (pay === 'full' ? T.total : T.dep)) return { error: fail(409, 'changed', 'Prices on this page are out of date. Please refresh the page and try again.') };
+  return { order: { ...order, T, pay, now: pay === 'full' ? T.total : T.dep, later: pay === 'full' ? 0 : T.bal }, contact };
 }
 
 // Name, email and phone for everyone; the address for deliveries. Returns { contact } or { error }.
@@ -186,9 +190,14 @@ function lineItems(o) {
 
 function invoiceNote(o, c, depositDue) {
   const T = o.T, where = o.method === 'Pickup' ? 'pickup' : 'delivery', a = c.address;
+  const when = `${niceDate(o.date)}${o.time ? ' at ' + niceTime(o.time) : ''}`;
   return [
-    `Thank you for your order! Pay the 50% deposit (${money(T.dep)}) by ${niceDate(depositDue)} to hold your date. It's non-refundable if you cancel, and refunded in full if B. can't take your date.`,
-    `The balance (${money(T.bal)}) is due at ${where} on ${niceDate(o.date)}${o.time ? ' at ' + niceTime(o.time) : ''}. Pay it here online, or at ${where}.`,
+    o.pay === 'full'
+      ? `Thank you for your order! Pay the full ${money(T.total)} by ${niceDate(depositDue)} to hold your date. It's non-refundable if you cancel, and refunded in full if B. can't take your date.`
+      : `Thank you for your order! Pay the 50% deposit (${money(T.dep)}) by ${niceDate(depositDue)} to hold your date. It's non-refundable if you cancel, and refunded in full if B. can't take your date.`,
+    o.pay === 'full'
+      ? `${where === 'pickup' ? 'Pickup' : 'Delivery'}: ${when}. Nothing more is due at ${where}${T.delExtra ? ' except the delivery fee noted below' : ''}.`
+      : `The balance (${money(T.bal)}) is due at ${where} on ${when}. Pay it here online, or at ${where}.`,
     o.method === 'Pickup' ? 'Pickup in North Charlotte (28262). B. sends the address when confirming your order.'
       : `Deliver to: ${[a.line1, a.line2].filter(Boolean).join(', ')}, ${a.city}, ${a.state} ${a.zip}`,
     `Phone: ${nicePhone(c.phone)}`,
@@ -233,11 +242,13 @@ export default async function handler(req) {
         location_id: location,
         order_id: sqOrder.id,
         primary_recipient: { customer_id: customerId },
-        payment_requests: [
-          // Square allows tipping_enabled only on the last request (the balance), so the deposit has none.
-          { request_type: 'DEPOSIT', due_date: depositDue, fixed_amount_requested_money: cents(T.dep) },
-          { request_type: 'BALANCE', due_date: order.date, tipping_enabled: false },
-        ],
+        // Square allows tipping_enabled only on the last request (the balance), so a deposit has none.
+        payment_requests: order.pay === 'full'
+          ? [{ request_type: 'BALANCE', due_date: depositDue, tipping_enabled: false }]
+          : [
+            { request_type: 'DEPOSIT', due_date: depositDue, fixed_amount_requested_money: cents(T.dep) },
+            { request_type: 'BALANCE', due_date: order.date, tipping_enabled: false },
+          ],
         delivery_method: 'EMAIL',
         invoice_number: no,
         title: `Luxury Bites order ${no}`,
@@ -255,7 +266,8 @@ export default async function handler(req) {
       if (u.protocol === 'https:' && INVOICE_PAGE.test(u.hostname)) invoiceUrl = u.href;
     } catch (_) { /* no pay button then; the email still has one */ }
     console.log(`Invoice sent for ${no}`);
-    return reply(200, { order: no, invoiceUrl, deposit: T.dep, balance: T.bal, depositDue });
+    // deposit = due within 48 hours (the whole total when paying in full); balance = due on the day.
+    return reply(200, { order: no, invoiceUrl, pay: order.pay, deposit: order.now, balance: order.later, depositDue });
   } catch (e) {
     console.error(`Order ${no} not sent:`, e.message);
     const codes = e.codes || [];

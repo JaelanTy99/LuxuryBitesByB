@@ -33,7 +33,7 @@ document.addEventListener('error', e => { if (e.target && e.target.tagName === '
 const freshBuild = p => ({ size: p.def || 0, choc: 0, flavor: 0, topping: 0, color: 0, touches: [], glitter: 0, qty: 1 });
 let sheet = [], seq = 0, cat = 'all';
 const build = Object.fromEntries(PRODUCTS.map(p => [p.id, freshBuild(p)]));
-let od = { date: '', time: '', method: 'Pickup', distance: 'near', occasion: '', notes: '', lettering: '', agree: false, sent: null };
+let od = { date: '', time: '', method: 'Pickup', distance: 'near', occasion: '', notes: '', lettering: '', pay: 'deposit', agree: false, sent: null };
 // The customer's contact details. Kept only in memory on this page (never saved in the browser) and sent
 // once, with the order, so Square can create the invoice. The site itself stores none of it.
 const NO_ONE = { name: '', email: '', phone: '', line1: '', line2: '', city: '', state: 'NC', zip: '' };
@@ -53,7 +53,7 @@ try {
       date: /^\d{4}-\d{2}-\d{2}$/.test(so.date) ? so.date : '', time: /^\d{2}:\d{2}$/.test(so.time) ? so.time : '',
       method: so.method === 'Delivery' ? 'Delivery' : 'Pickup', distance: DISTANCES.some(d => d[0] === so.distance) ? so.distance : 'near',
       occasion: OCCASIONS.includes(so.occasion) ? so.occasion : '', notes: str(so.notes, 1000), lettering: str(so.lettering, 120),
-      agree: false, sent: null });
+      pay: so.pay === 'full' ? 'full' : 'deposit', agree: false, sent: null });
   }
 } catch (_) { /* storage unavailable: start fresh */ }
 function save() {
@@ -190,13 +190,19 @@ function selHTML() {
 }
 function ledgerHTML() {
   const T = totals(), where = od.method === 'Pickup' ? 'pickup' : 'delivery';
+  const full = od.pay === 'full' && !isRush(T.days), now = full ? T.total : T.dep, later = full ? 0 : T.bal;
   return `<span class="kicker"><span class="a">⚜</span> The ledger</span>
     <div class="ln"><span>Subtotal</span><span>${money(T.sub)}</span></div>
     ${T.rush ? `<div class="ln"><span>Rush fee (within 48 hrs)</span><span>$10</span></div>` : ''}
     ${T.delLabel ? `<div class="ln"><span>Delivery</span><span>${T.delLabel}</span></div>` : ''}
     <div class="ln tot"><span>Order total</span><span>${money(T.total)}</span></div>
-    <div class="ln dep"><span>${isRush(T.days) ? 'Deposit (50%)' : 'Deposit (50%), due in 48 hrs'}</span><span>${money(T.dep)}</span></div>
-    <div class="ln"><span>Due at ${where}</span><span>${money(T.bal)}</span></div>
+    ${isRush(T.days) ? '' : `
+    <div class="payopt" role="radiogroup" aria-label="How you'd like to pay">
+      <button data-pay="deposit" role="radio" aria-checked="${!full}" class="${full ? '' : 'on'}"><b>50% deposit</b><span>${money(T.dep)} now, rest at ${where}</span></button>
+      <button data-pay="full" role="radio" aria-checked="${full}" class="${full ? 'on' : ''}"><b>Pay in full</b><span>${money(T.total)} now, nothing at ${where}</span></button>
+    </div>`}
+    <div class="ln dep"><span>${isRush(T.days) ? 'Deposit (50%)' : full ? 'Paid in full, due in 48 hrs' : 'Deposit (50%), due in 48 hrs'}</span><span>${money(now)}</span></div>
+    <div class="ln"><span>Due at ${where}</span><span>${money(later)}</span></div>
     ${T.delExtra === 'quoted' ? `<p class="fine">B. quotes the delivery fee, and it's added to what you pay at delivery.</p>` : ''}
     ${T.delExtra === 'more' ? `<p class="fine">Delivery is $15 and up. Anything over $15 is added to what you pay at delivery.</p>` : ''}
     ${isRush(T.days) ? `
@@ -204,10 +210,12 @@ function ledgerHTML() {
       <a class="send" id="rushdm" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Message B. on Instagram ↗</a>
       <p class="fine">Your order summary is copied when you tap, so you can paste it into the message.</p></div>
     <div id="errmsg"></div>` : `
-    <label class="agree"><input type="checkbox" id="agree" ${od.agree ? 'checked' : ''}><span>I understand the 50% deposit is non-refundable if I cancel, refunded in full if B. can't take my date, and the balance is due at ${where}.</span></label>
+    <label class="agree"><input type="checkbox" id="agree" ${od.agree ? 'checked' : ''}><span>${full
+      ? `I understand my payment is non-refundable if I cancel, and refunded in full if B. can't take my date.`
+      : `I understand the 50% deposit is non-refundable if I cancel, refunded in full if B. can't take my date, and the balance is due at ${where}.`}</span></label>
     <div id="errmsg"></div>
     <button class="send" id="pay" ${paying ? 'disabled' : ''}>${paying ? 'Sending your invoice…' : 'Send my order'}</button>
-    <p class="fine paynote">Square emails your invoice right away. Pay the ${money(T.dep)} deposit within 48 hours to hold your date, then B. confirms your order.</p>`}`;
+    <p class="fine paynote">Square emails your invoice right away. Pay the ${money(now)}${full ? '' : ' deposit'} within 48 hours to hold your date, then B. confirms your order.</p>`}`;
 }
 function methodNote() {
   if (od.method === 'Pickup') return `<p class="note">Pickup is in North Charlotte (28262). <span class="tbd">The exact address and instructions come when B. confirms your order.</span></p>`;
@@ -219,7 +227,7 @@ function renderOrder() {
   if (od.sent) return renderSent(el);
   el.innerHTML = `
     <div class="phead pad"><p class="kicker"><span class="a">05</span> · Order</p><h1>The Order <em>Sheet</em></h1>
-      <p class="deck">Review your selections, tell us when and how to reach you, and send your order. Square emails your invoice right away: the 50% deposit holds your date.</p></div>
+      <p class="deck">Review your selections, tell us when and how to reach you, and send your order. Square emails your invoice right away: a 50% deposit or the full amount holds your date.</p></div>
     <div class="sheet pad">
       <div>
         <h2><i>i.</i>Your selections</h2>
@@ -411,14 +419,14 @@ async function pay() {
         lines: sheet.map(({ pid, size, choc, flavor, topping, color, glitter, touches, qty }) => ({ pid, size, choc, flavor, topping, color, glitter, touches, qty })),
         details: { date: od.date, time: od.time, method: od.method, distance: od.distance, occasion: od.occasion, notes: od.notes, lettering: od.lettering },
         contact: { name: w.name, email: w.email, phone: w.phone, ...(od.method === 'Delivery' && { address: { line1: w.line1, line2: w.line2, city: w.city, state: w.state, zip: w.zip } }) },
-        agree: od.agree, expected: T.dep,
+        pay: od.pay, agree: od.agree, expected: od.pay === 'full' ? T.total : T.dep,
       }),
     });
     data = await res.json();
   } catch (_) { /* shown below */ }
   paying = false;
   if (res && res.ok && ORDER_NO.test(data.order)) {
-    paid = { order: data.order, email: who.email.trim(), url: invoiceUrl(data.invoiceUrl), dep: data.deposit, bal: data.balance,
+    paid = { order: data.order, email: who.email.trim(), url: invoiceUrl(data.invoiceUrl), full: data.pay === 'full', dep: data.deposit, bal: data.balance,
       depDue: /^\d{4}-\d{2}-\d{2}$/.test(data.depositDue || '') ? data.depositDue : '', date: od.date, method: od.method, extra: T.delExtra };
     // Kept for this tab only so a refresh still shows the order number; no contact details or invoice link.
     try { sessionStorage.setItem(THANKS, JSON.stringify({ ...paid, email: '', url: '' })); } catch (_) { /* ignore */ }
@@ -446,7 +454,7 @@ function readPaid() {
   try {
     const s = JSON.parse(sessionStorage.getItem(THANKS) || 'null');
     if (s && ORDER_NO.test(s.order)) paid = {
-      order: s.order, legacy: s.legacy === true, email: '', url: null,
+      order: s.order, legacy: s.legacy === true, email: '', url: null, full: s.full === true,
       dep: typeof s.dep === 'number' ? s.dep : null, bal: typeof s.bal === 'number' ? s.bal : null,
       depDue: /^\d{4}-\d{2}-\d{2}$/.test(s.depDue || '') ? s.depDue : '', date: /^\d{4}-\d{2}-\d{2}$/.test(s.date || '') ? s.date : '',
       method: s.method === 'Delivery' ? 'Delivery' : 'Pickup', extra: ['quoted', 'more'].includes(s.extra) ? s.extra : '' };
@@ -464,19 +472,21 @@ function renderThanks() {
     return;
   }
   const dep = P.dep != null ? money(P.dep) + ' ' : '', bal = P.bal != null ? money(P.bal) + ' ' : '';
-  const by = P.depDue ? ` by ${niceDate(P.depDue)}` : ' within 48 hours';
+  const by = P.depDue ? ` by ${niceDate(P.depDue)}` : ' within 48 hours', what = P.full ? 'payment' : 'deposit';
   $('#thanksPage').innerHTML = `<div class="thanks pad">
     <p class="kicker"><span class="a">⚜</span> Invoice sent</p>
     <h1>Thank you, <em>Luxe Babe.</em></h1>
     <p class="orderno">Order <b>${esc(P.order)}</b></p>
-    <p class="deck">Square just emailed your invoice${P.email ? ` to <b>${esc(P.email)}</b>` : ''}. Pay the ${dep}deposit${by} to hold ${P.date ? niceDate(P.date) : 'your date'}.</p>
-    ${P.url ? `<a class="big" href="${esc(P.url)}" target="_blank" rel="noopener noreferrer">Pay the ${dep}deposit now ↗</a>
+    <p class="deck">Square just emailed your invoice${P.email ? ` to <b>${esc(P.email)}</b>` : ''}. Pay the ${dep}${P.full ? '' : 'deposit'}${by} to hold ${P.date ? niceDate(P.date) : 'your date'}.</p>
+    ${P.url ? `<a class="big" href="${esc(P.url)}" target="_blank" rel="noopener noreferrer">${P.full ? `Pay ${dep}now ↗` : `Pay the ${dep}deposit now ↗`}</a>
     <p class="fine">Opens your invoice on Square's secure page. You can also use the Pay button in Square's email.</p>`
       : `<p class="fine">Use the Pay button in Square's email. Can't see it? Check your spam or promotions folder.</p>`}
     <div class="how">
-      <div><b>1</b><h3>Pay the deposit.</h3><p>The 50% deposit${by} holds your date. It's non-refundable if you cancel.</p></div>
-      <div><b>2</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your deposit is refunded in full.</p></div>
-      <div><b>3</b><h3>Pay the balance.</h3><p>The remaining ${bal}is on the same invoice, due at ${where}${P.extra === 'quoted' ? ', plus the quoted delivery fee' : P.extra === 'more' ? ', plus any delivery fee over $15' : ''}. Pay it online or at ${where}.</p></div>
+      <div><b>1</b><h3>${P.full ? 'Pay your invoice.' : 'Pay the deposit.'}</h3><p>${P.full ? `Paying in full${by}` : `The 50% deposit${by}`} holds your date. It's non-refundable if you cancel.</p></div>
+      <div><b>2</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your ${what} is refunded in full.</p></div>
+      ${P.full
+        ? `<div><b>3</b><h3>Nothing more to pay.</h3><p>You're all paid up for ${where}${P.extra === 'quoted' ? ', apart from the quoted delivery fee' : P.extra === 'more' ? ', apart from any delivery fee over $15' : ''}.</p></div>`
+        : `<div><b>3</b><h3>Pay the balance.</h3><p>The remaining ${bal}is on the same invoice, due at ${where}${P.extra === 'quoted' ? ', plus the quoted delivery fee' : P.extra === 'more' ? ', plus any delivery fee over $15' : ''}. Pay it online or at ${where}.</p></div>`}
       <div><b>4</b><h3>Enjoy.</h3><p>So rich. So smooth. Elegantly sweet.</p></div>
     </div>${ctas}</div>`;
 }
@@ -539,6 +549,7 @@ document.addEventListener('click', e => {
   }
   if (c('[data-rm]')) { sheet = sheet.filter(x => x.key != c('[data-rm]').dataset.rm); save(); return renderAll(); }
   if (c('[data-method]')) { od.method = c('[data-method]').dataset.method; save(); return renderOrder(); } // contact details stay in `who`
+  if (c('[data-pay]')) { od.pay = c('[data-pay]').dataset.pay === 'full' ? 'full' : 'deposit'; save(); return refreshOrderBits(); }
   if (c('#pay')) return pay();
   if (c('[data-formfallback]')) return send();
   if (c('#rushdm')) return copyText(summaryText(totals()));

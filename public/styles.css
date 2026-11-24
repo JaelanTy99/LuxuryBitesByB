@@ -559,3 +559,12 @@ body{background:#fff}
 .fields + h2{margin-top:60px}
 .thanks .big + .fine{margin-top:10px}
 @media (max-width:900px){.fields.two{grid-template-columns:1fr 1fr}}
+
+/* ---------- V8: pay a 50% deposit or the full amount ---------- */
+.payopt{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ink);margin:18px 0 6px}
+.payopt button{display:flex;flex-direction:column;gap:4px;padding:12px 10px;text-align:left;color:var(--ink)}
+.payopt button + button{border-left:1px solid var(--ink)}
+.payopt b{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.payopt span{font-size:13px;color:var(--body)}
+.payopt button.on{background:var(--cocoa);color:var(--paper)}
+.payopt button.on span{color:var(--paper)}

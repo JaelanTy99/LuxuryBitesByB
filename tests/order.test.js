@@ -333,6 +333,36 @@ await test('Square refusing the email or phone tells the customer which one to c
   eq([r.status, r.data.field], [400, 'phone'], 'phone');
 });
 
+await test('V8 pay in full: one invoice part for the whole total, due within 48 hours, nothing left for the day', async () => {
+  const sent = order({ pay: 'full', expected: 127 });
+  const { status, data } = await call(sent);
+  eq(status, 200, 'status');
+  const inv = post('/v2/invoices').invoice;
+  eq(inv.payment_requests, [{ request_type: 'BALANCE', due_date: day(2), tipping_enabled: false }], 'one part, due in 2 days');
+  ok(inv.description.includes('Pay the full $127 by') && inv.description.includes('Nothing more is due at pickup'), 'description');
+  ok(!inv.description.includes('50% deposit ('), 'no deposit wording');
+  eq(post('/v2/orders').order.line_items.reduce((t, l) => t + l.base_price_money.amount * Number(l.quantity), 0), 12700, 'order is the full total');
+  eq([data.pay, data.deposit, data.balance, data.depositDue], ['full', 127, 0, day(2)], 'reply');
+});
+
+await test('V8 pay in full must match the total the page showed; anything else is a deposit', async () => {
+  let r = await call(order({ pay: 'full' })); // expected is still the deposit amount
+  eq([r.status, r.data.code, calls.length], [409, 'changed', 0], 'full with the deposit amount is refused');
+  r = await call(order({ pay: 'everything', expected: 63.5 }));
+  eq([r.status, r.data.pay, post('/v2/invoices').invoice.payment_requests.length], [200, 'deposit', 2], 'unknown choice = deposit');
+  calls = [];
+  r = await call(order({ pay: 'everything', expected: 127 }));
+  eq(r.status, 409, 'unknown choice with the full amount is refused');
+});
+
+await test('V8 pay in full with a quoted delivery fee still says the fee is added at delivery', async () => {
+  const T = M.quote([M.cleanLine(LINES[1])], { date: day(7), method: 'Delivery', distance: 'near' }, today());
+  const r = await call(order({ lines: [LINES[1]], pay: 'full', expected: T.total }, { method: 'Delivery', distance: 'near' }));
+  eq([r.status, r.data.deposit, r.data.balance], [200, 45, 0], 'pays the $45 now');
+  const d = post('/v2/invoices').invoice.description;
+  ok(d.includes('except the delivery fee noted below') && d.includes('quoted by B.'), 'fee explained');
+});
+
 const failed = results.filter(r => r[0] !== 'ok');
 document.getElementById('out').textContent = results.map(r => r.join('  ')).join('\n') + `\n\n${results.length - failed.length}/${results.length} passed`;
 document.title = failed.length ? 'FAIL' : 'PASS';
