@@ -104,10 +104,10 @@ function touchesHTML(p, b) {
 // Treats with more than one photo (V10): a large photo plus thumbnails that switch it.
 const GALLERY = {
   apple: [
-    ['apple', 'A glossy yellow candy apple'],
+    ['apple', 'Candy apples in different flavours on clear stands'],
+    ['apple-yellow', 'A glossy yellow candy apple'],
     ['apple-purple', 'A glossy purple candy apple'],
     ['apple-sugar', 'A sugar-coated candy apple'],
-    ['apple-table', 'Candy apples in different flavours on clear stands'],
   ],
 };
 const shown = {}; // which gallery photo is showing, per treat

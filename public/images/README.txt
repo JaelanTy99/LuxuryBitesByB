@@ -16,10 +16,10 @@ The Treats page (also the hover preview on the home menu list)
   krisp.jpg           butterfly Rice Krispies
   oreo.jpg            butterfly Oreos
   rods.jpg            chocolate-covered pretzels (rods or twists)
-  apple.jpg           yellow candy apple (B.'s own photos from here down, V10)
-  apple-purple.jpg    purple candy apple   } the candy apple gallery: thumbnails under the
-  apple-sugar.jpg     sugar-coated apple   } main photo on The Treats page (GALLERY in
-  apple-table.jpg     apples on stands     } script.js); apple.jpg is also the home hover photo
+  apple.jpg           candy apples on clear stands, cropped tall (B.'s own photos from here down, V10/V11)
+  apple-yellow.jpg    yellow candy apple   } the candy apple gallery: thumbnails under the
+  apple-purple.jpg    purple candy apple   } main photo on The Treats page (GALLERY in
+  apple-sugar.jpg     sugar-coated apple   } script.js); apple.jpg is also the home hover photo
 
 Party Edit and The Maker
   custom-table.jpg    Fig. 6   treats at the dino-themed birthday
