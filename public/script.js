@@ -101,10 +101,26 @@ function touchesHTML(p, b) {
   return `<div class="touches"><span class="t" id="tt-${p.id}">Finishing touches <small style="text-transform:none;letter-spacing:0;font-weight:500">(optional, per ${p.sizes[0][0] === 'Dozen' ? 'dozen' : 'box'})</small></span>
     <div class="chips" role="group" aria-labelledby="tt-${p.id}">${TOUCHES.map(t => `<button class="touch" data-touch="${t.id}" data-p="${p.id}" aria-pressed="${b.touches.includes(t.id)}">${t.label}<small>+$${t.price}</small></button>`).join('')}</div></div>`;
 }
+// Treats with more than one photo (V10): a large photo plus thumbnails that switch it.
+const GALLERY = {
+  apple: [
+    ['apple', 'A glossy yellow candy apple'],
+    ['apple-purple', 'A glossy purple candy apple'],
+    ['apple-sugar', 'A sugar-coated candy apple'],
+    ['apple-table', 'Candy apples in different flavours on clear stands'],
+  ],
+};
+const shown = {}; // which gallery photo is showing, per treat
+function figureHTML(p) {
+  const g = GALLERY[p.id], i = shown[p.id] || 0;
+  return `<figure><div class="ph ${p.tone}" data-label="Photo">${g ? photo(g[i][0], g[i][1]) : photo(p.photo || p.id, p.name)}</div>
+    ${g ? `<div class="thumbs" role="group" aria-label="More ${p.name.toLowerCase()} photos">${g.map(([file, alt], k) => `<button data-thumb="${k}" data-p="${p.id}" aria-pressed="${k === i}" aria-label="Show photo ${k + 1}: ${esc(alt)}"><img src="images/${file}.jpg" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+    <figcaption class="cap">Fig. ${PRODUCTS.indexOf(p) + 2}: ${p.name}.</figcaption></figure>`;
+}
 function treatHTML(p) {
   const b = build[p.id], k = inSheet(p.id);
   return `<article class="treat pad" id="t-${p.id}">
-    <figure><div class="ph ${p.tone}" data-label="Photo">${photo(p.photo || p.id, p.name)}</div><figcaption class="cap">Fig. ${PRODUCTS.indexOf(p) + 2}: ${p.name}.</figcaption></figure>
+    ${figureHTML(p)}
     <div>
       <span class="i">${p.rn}</span>${k ? `<span class="incart">${k} on your sheet</span>` : ''}
       <h2>${p.name}</h2><p class="blurb">${p.blurb}</p>
@@ -539,6 +555,13 @@ document.addEventListener('click', e => {
     const btn = c('[data-bq]'), p = byId[btn.dataset.p], s = build[p.id];
     s.qty = Math.max(1, Math.min(p.max || 20, s.qty + +btn.dataset.bq)); btn.parentElement.querySelector('span').textContent = s.qty;
     return $('#lp-' + p.id).textContent = money(unitOf(p, s) * s.qty);
+  }
+  if (c('[data-thumb]')) {
+    const btn = c('[data-thumb]'), id = btn.dataset.p, k = +btn.dataset.thumb;
+    if (!GALLERY[id]?.[k]) return;
+    shown[id] = k;
+    $(`#t-${id} figure`).outerHTML = figureHTML(byId[id]);
+    return $(`#t-${id} [data-thumb="${k}"]`)?.focus();
   }
   if (c('[data-style]')) {
     const btn = c('[data-style]'), p = byId[btn.dataset.p];
