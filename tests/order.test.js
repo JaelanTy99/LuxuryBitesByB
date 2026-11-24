@@ -17,7 +17,10 @@ function freshSquare({ existing = null, publicUrl = INVOICE_URL } = {}) {
     'POST /v2/customers/search': json(existing ? { customers: [existing] } : {}),
     'POST /v2/customers': b => json({ customer: { id: 'NEWCUST1', ...b } }),
     'POST /v2/orders': b => json({ order: { id: 'ORDER1', ...b.order } }),
-    'POST /v2/invoices': b => json({ invoice: { id: 'INV1', version: 0, status: 'DRAFT', ...b.invoice } }),
+    // Like real Square: tipping_enabled is allowed only on the last payment request.
+    'POST /v2/invoices': b => (b.invoice.payment_requests || []).slice(0, -1).some(p => 'tipping_enabled' in p)
+      ? json({ errors: [{ code: 'INVALID_VALUE', field: 'invoice.payment_requests[0].tipping_enabled' }] }, 400)
+      : json({ invoice: { id: 'INV1', version: 0, status: 'DRAFT', ...b.invoice } }),
     'POST /v2/invoices/INV1/publish': json({ invoice: { id: 'INV1', version: 1, status: 'UNPAID', public_url: publicUrl } }),
   };
 }
@@ -102,7 +105,7 @@ await test('pickup order: new customer, every treat, invoice with 50% deposit (4
   const inv = post('/v2/invoices').invoice;
   eq([inv.order_id, inv.primary_recipient.customer_id, inv.invoice_number, inv.delivery_method, inv.sale_or_service_date], ['ORDER1', 'NEWCUST1', data.order, 'EMAIL', sent.details.date], 'invoice basics');
   eq(inv.payment_requests, [
-    { request_type: 'DEPOSIT', due_date: day(2), fixed_amount_requested_money: { amount: 6350, currency: 'USD' }, tipping_enabled: false },
+    { request_type: 'DEPOSIT', due_date: day(2), fixed_amount_requested_money: { amount: 6350, currency: 'USD' } },
     { request_type: 'BALANCE', due_date: sent.details.date, tipping_enabled: false },
   ], 'deposit due in 2 days, balance due on the day');
   eq(inv.accepted_payment_methods.card, true, 'card accepted');
@@ -151,6 +154,7 @@ await test('delivery within 10 miles under $100: no fee now, B. quotes it', asyn
 await test('contact details are checked before anything reaches Square', async () => {
   const cases = [
     [{ name: ' ' }, 'name'], [{ email: 'not-an-email' }, 'email'], [{ email: 'a@b' }, 'email'], [{ email: 'a b@c.com' }, 'email'],
+    [{ email: 'jas@gmail.coom' }, 'email'], [{ email: 'jas@gmail.con' }, 'email'],
     [{ phone: '555-1234' }, 'phone'], [{ phone: '(123) 555-1234' }, 'phone'], [{ phone: '' }, 'phone'],
   ];
   for (const [bad, field] of cases) {
@@ -301,6 +305,32 @@ await test('logs never contain the customer\'s name, email, phone, address, note
 await test('function is served at /api/order with a tight rate limit', () => {
   eq(config.path, '/api/order', 'path');
   ok(config.rateLimit && config.rateLimit.windowLimit > 0 && config.rateLimit.windowLimit <= 5, 'rate limit set');
+});
+
+await test('old /api/checkout (pages opened before V7) says to refresh, and never calls Square', async () => {
+  const old = await import('../netlify/functions/checkout.mjs');
+  eq(old.config.path, '/api/checkout', 'path');
+  const res = await old.default(req(order()));
+  const data = await res.json();
+  eq([res.status, data.code], [409, 'changed'], 'status');
+  ok(/refresh the page/.test(data.error), 'tells them to refresh');
+  eq(calls.length, 0, 'no Square calls');
+});
+
+await test('Square\'s rules for invoices are followed (tipping only on the last part; deposit + balance)', async () => {
+  await call(order());
+  const [dep, bal] = post('/v2/invoices').invoice.payment_requests;
+  ok(!('tipping_enabled' in dep) && !('percentage_requested' in dep), 'deposit: fixed amount only, no tipping setting');
+  ok(!('fixed_amount_requested_money' in bal) && bal.tipping_enabled === false, 'balance: no amount, tipping off');
+});
+
+await test('Square refusing the email or phone tells the customer which one to check', async () => {
+  square['POST /v2/customers'] = json({ errors: [{ code: 'INVALID_EMAIL_ADDRESS', category: 'INVALID_REQUEST_ERROR' }] }, 400);
+  let r = await call(order());
+  eq([r.status, r.data.field], [400, 'email'], 'email');
+  square['POST /v2/customers'] = json({ errors: [{ code: 'INVALID_PHONE_NUMBER', category: 'INVALID_REQUEST_ERROR' }] }, 400);
+  r = await call(order());
+  eq([r.status, r.data.field], [400, 'phone'], 'phone');
 });
 
 const failed = results.filter(r => r[0] !== 'ok');
