@@ -1,4 +1,5 @@
-/* Luxury Bites by B. — creates a Square payment link for the 50% deposit.
+/* Luxury Bites by B. — creates a Square payment link for the 50% deposit. (After it's paid,
+   square-webhook.mjs sends the customer an invoice for the balance.)
    The browser sends only the menu choices and the date. The total is recalculated here from the
    shared menu (public/menu.js), never taken from the browser, then Square's Checkout API makes a
    hosted payment page. Name, email, phone, address and card are entered only on Square's page.
@@ -9,6 +10,7 @@
      SQUARE_ENV           "sandbox" or "production"; anything else switches online payment off */
 
 import '../../public/menu.js';
+import { writeMeta } from '../lib/order-meta.mjs';
 
 const { cleanLine, quote, isRush, lineText, money, niceDate, niceTime, byId, DISTANCES, OCCASIONS } = globalThis.LuxuryMenu;
 
@@ -132,7 +134,7 @@ export default async function handler(req) {
   if (error) return error;
 
   const no = orderNumber(), T = order.T;
-  const res = await squareFetch(`${SQUARE_API[mode]}/v2/online-checkout/payment-links`, {
+  const createLink = withMeta => squareFetch(`${SQUARE_API[mode]}/v2/online-checkout/payment-links`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Square-Version': SQUARE_VERSION, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -140,6 +142,8 @@ export default async function handler(req) {
       order: {
         location_id: location,
         reference_id: no,
+        // A compact copy of the order, read back by square-webhook.mjs to build the balance invoice.
+        ...(withMeta && { metadata: writeMeta(order, T) }),
         line_items: [{
           name: `50% deposit · Luxury Bites order ${no}`,
           quantity: '1',
@@ -155,12 +159,22 @@ export default async function handler(req) {
         allow_tipping: false,
         merchant_support_email: SUPPORT_EMAIL,
       },
-      payment_note: `Order ${no} · deposit for ${niceDate(order.date)} ${order.method.toLowerCase()} · balance ${money(T.bal)}`.slice(0, 500),
+      // The ISO date and balance here are a backup for the invoice step if the metadata is missing.
+      payment_note: `Order ${no} · deposit for ${niceDate(order.date)} ${order.method.toLowerCase()} (${order.date}) · balance ${money(T.bal)}`.slice(0, 500),
     }),
   }).catch(e => { console.error('Square request failed:', e.name); return null; });
 
+  let res = await createLink(true), errors = [];
+  if (res && !res.ok) errors = (await res.json().catch(() => ({}))).errors || [];
+  // Safety net: if Square ever refuses the order copy, take the payment without it (the invoice step
+  // then falls back to the payment note). Customers must always be able to pay.
+  if (res && res.status === 400 && /metadata/i.test(JSON.stringify(errors))) {
+    console.error('Square refused the order metadata; retrying without it');
+    res = await createLink(false);
+    errors = res && !res.ok ? (await res.json().catch(() => ({}))).errors || [] : [];
+  }
   if (!res || !res.ok) {
-    if (res) console.error('Square error', res.status, JSON.stringify((await res.json().catch(() => ({}))).errors || []));
+    if (res) console.error('Square error', res.status, JSON.stringify(errors));
     return fail(502, 'square', 'We couldn’t reach Square just now. Please try again in a minute.');
   }
   const data = await res.json().catch(() => ({}));

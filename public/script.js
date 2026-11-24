@@ -418,8 +418,8 @@ function renderThanks() {
     <p class="deck">Your 50% deposit is in. Keep your order number handy in case you need to reach B.</p>
     <div class="how">
       <div><b>1</b><h3>B. confirms.</h3><p>B. checks your date and confirms your order. If B. can't take it, your deposit is refunded in full.</p></div>
-      <div><b>2</b><h3>Receipt by email.</h3><p>Square emails you a receipt for your deposit.</p></div>
-      <div><b>3</b><h3>Pay the balance.</h3><p>Pay the remaining ${paid.bal != null ? money(paid.bal) + ' ' : ''}at ${where}${paid.extra === 'quoted' ? ', plus the quoted delivery fee' : paid.extra === 'more' ? ', plus any delivery fee over $15' : ''}.</p></div>
+      <div><b>2</b><h3>Receipt and invoice by email.</h3><p>Square emails you a receipt for your deposit, then an invoice for the balance listing your treats.</p></div>
+      <div><b>3</b><h3>Pay the balance.</h3><p>Pay the remaining ${paid.bal != null ? money(paid.bal) + ' ' : ''}at ${where}${paid.extra === 'quoted' ? ', plus the quoted delivery fee' : paid.extra === 'more' ? ', plus any delivery fee over $15' : ''}, or pay the invoice online before then.</p></div>
       <div><b>4</b><h3>Enjoy.</h3><p>So rich. So smooth. Elegantly sweet.</p></div>
     </div>
     <div class="ctas" style="margin-top:48px"><a class="cta" href="#/treats">Back to the treats →</a><a class="cta" href="https://ig.me/m/luxurybitesbyb" target="_blank" rel="noopener noreferrer">Questions? Message B. ↗</a></div>

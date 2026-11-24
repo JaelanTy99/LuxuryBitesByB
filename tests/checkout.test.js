@@ -88,6 +88,30 @@ await test('valid pickup order creates one sandbox payment link for the deposit'
   ok(b.payment_note.length <= 500 && note.length <= 2000, 'note lengths within Square limits');
 });
 
+await test('V6: the order carries what the invoice step needs (metadata, plus a backup in the payment note)', async () => {
+  const { readMeta } = await import('../netlify/lib/order-meta.mjs');
+  const { data } = await call(order());
+  const b = calls[0].body, meta = readMeta(b.order.metadata), sent = order();
+  ok(meta && meta.lines, 'metadata readable');
+  eq(meta.lines.map(M.lineText), sent.lines.map(M.cleanLine).map(M.lineText), 'every treat');
+  eq([meta.date, meta.method, meta.total, meta.balance], [sent.details.date, 'Pickup', 12700, 6350], 'date, method and amounts');
+  ok(Object.keys(b.order.metadata).length <= 10 && Object.values(b.order.metadata).every(v => v.length <= 255), 'within Square metadata limits');
+  ok(b.payment_note.startsWith(`Order ${data.order} `) && b.payment_note.includes(`(${sent.details.date})`) && b.payment_note.endsWith('· balance $63.50'), 'payment note backup');
+});
+
+await test('V6 safety net: if Square refuses the order copy, the payment link is made without it', async () => {
+  replies = [new Response(JSON.stringify({ errors: [{ code: 'INVALID_VALUE', field: 'order.metadata' }] }), { status: 400 })];
+  const { status, data } = await call(order());
+  eq(status, 200, 'customer can still pay');
+  eq(calls.length, 2, 'tried twice');
+  ok(calls[0].body.order.metadata && !('metadata' in calls[1].body.order), 'second try has no metadata');
+  ok(calls[0].body.idempotency_key !== calls[1].body.idempotency_key, 'new idempotency key for the changed request');
+  eq(calls[1].body.order.reference_id, data.order, 'same order number');
+  replies = [squareErr(400)];
+  eq((await call(order())).status, 502, 'other 400s are not retried');
+  eq(calls.length, 3, 'one call for the other 400');
+});
+
 await test('prices sent by the browser are ignored', async () => {
   const lines = [{ ...LINES[0], unit: 0.01, price: 0.01 }, LINES[1]];
   const { status } = await call({ ...order({ lines }), total: 1 });
